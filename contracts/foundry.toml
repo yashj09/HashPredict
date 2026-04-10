@@ -8,8 +8,8 @@ optimizer_runs = 200
 via_ir = true
 
 [rpc_endpoints]
-hashkey_testnet = "${HASHKEY_TESTNET_RPC_URL}"
-hashkey_mainnet = "${HASHKEY_MAINNET_RPC_URL}"
+hashkey_testnet = "https://testnet.hsk.xyz"
+hashkey_mainnet = "https://mainnet.hsk.xyz"
 
 [etherscan]
 hashkey_testnet = { key = "", chain = 133, url = "https://testnet-explorer.hsk.xyz/api" }

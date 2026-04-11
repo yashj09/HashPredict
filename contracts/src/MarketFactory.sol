@@ -15,6 +15,7 @@ contract MarketFactory is Ownable {
     address[] public markets;
     mapping(address => bool) public whitelistedCollaterals;
     mapping(address => bool) public isMarket;
+    mapping(address => bool) public authorizedResolvers;
 
     uint256 public creationFeeBps = 100; // 1%
     uint256 public constant BPS = 10_000;
@@ -110,6 +111,22 @@ contract MarketFactory is Ownable {
 
     /// @notice Resolve a market (convenience function for owner)
     function resolveMarket(address market, bool outcomeIsYes) external onlyOwner {
+        require(isMarket[market], "MarketFactory: not a market");
+        PredictionMarket(market).emergencyResolve(outcomeIsYes);
+    }
+
+    // ========================
+    //    ORACLE RESOLVER
+    // ========================
+
+    /// @notice Authorize or revoke an external resolver (e.g., SupraResolver)
+    function setAuthorizedResolver(address resolver, bool status) external onlyOwner {
+        authorizedResolvers[resolver] = status;
+    }
+
+    /// @notice Called by an authorized resolver to resolve a market via oracle
+    function oracleResolveMarket(address market, bool outcomeIsYes) external {
+        require(authorizedResolvers[msg.sender], "MarketFactory: not authorized resolver");
         require(isMarket[market], "MarketFactory: not a market");
         PredictionMarket(market).emergencyResolve(outcomeIsYes);
     }

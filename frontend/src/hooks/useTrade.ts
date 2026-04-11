@@ -1,49 +1,61 @@
 "use client";
 
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from "wagmi";
+import { useState } from "react";
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseUnits } from "viem";
+import { toast } from "sonner";
 import { MARKET_ABI, USDT_ABI, ERC20_ABI } from "@/lib/contracts";
+import { publicClient } from "@/lib/publicClient";
 
 export function useApproveAndBuy(
   marketAddress: `0x${string}`,
   collateralToken: `0x${string}`,
 ) {
-  const { writeContract: approve, data: approveTxHash, isPending: isApproving } = useWriteContract();
-  const { writeContract: buy, data: buyTxHash, isPending: isBuying } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [buyTxHash, setBuyTxHash] = useState<`0x${string}` | undefined>();
+  const [isBuyConfirmed, setIsBuyConfirmed] = useState(false);
 
-  const { isLoading: isApproveConfirming } = useWaitForTransactionReceipt({
-    hash: approveTxHash,
-  });
-
-  const { isLoading: isBuyConfirming, isSuccess: isBuyConfirmed } = useWaitForTransactionReceipt({
-    hash: buyTxHash,
-  });
-
-  const executeBuy = (isYes: boolean, amount: string, decimals: number = 6) => {
+  const executeBuy = async (isYes: boolean, amount: string, decimals: number = 6) => {
     const parsed = parseUnits(amount, decimals);
-    approve(
-      {
+    setIsProcessing(true);
+    setIsBuyConfirmed(false);
+    try {
+      toast.info("Approving USDT spend...");
+      const approveHash = await writeContractAsync({
         address: collateralToken,
         abi: USDT_ABI,
         functionName: "approve",
         args: [marketAddress, parsed],
-      },
-      {
-        onSuccess: () => {
-          buy({
-            address: marketAddress,
-            abi: MARKET_ABI,
-            functionName: "buy",
-            args: [isYes, parsed],
-          });
-        },
-      },
-    );
+        gas: 100_000n,
+      });
+      toast.info("Waiting for approval confirmation...");
+      await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+      toast.info("Sending buy transaction...");
+      const hash = await writeContractAsync({
+        address: marketAddress,
+        abi: MARKET_ABI,
+        functionName: "buy",
+        args: [isYes, parsed],
+        gas: 800_000n,
+      });
+      setBuyTxHash(hash);
+      toast.info("Waiting for buy confirmation...");
+      await publicClient.waitForTransactionReceipt({ hash });
+      setIsBuyConfirmed(true);
+      toast.success("Trade confirmed!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Transaction failed";
+      toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return {
     executeBuy,
-    isLoading: isApproving || isApproveConfirming || isBuying || isBuyConfirming,
+    isLoading: isProcessing,
     isBuyConfirmed,
     buyTxHash,
   };
@@ -53,60 +65,84 @@ export function useApproveAndSell(
   marketAddress: `0x${string}`,
   tokenAddress: `0x${string}`,
 ) {
-  const { writeContract: approve, data: approveTxHash, isPending: isApproving } = useWriteContract();
-  const { writeContract: sell, data: sellTxHash, isPending: isSelling } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSellConfirmed, setIsSellConfirmed] = useState(false);
+  const [sellTxHash, setSellTxHash] = useState<`0x${string}` | undefined>();
 
-  const { isLoading: isApproveConfirming } = useWaitForTransactionReceipt({
-    hash: approveTxHash,
-  });
-
-  const { isLoading: isSellConfirming, isSuccess: isSellConfirmed } = useWaitForTransactionReceipt({
-    hash: sellTxHash,
-  });
-
-  const executeSell = (isYes: boolean, amount: string, decimals: number = 18) => {
+  const executeSell = async (isYes: boolean, amount: string, decimals: number = 18) => {
     const parsed = parseUnits(amount, decimals);
-    approve(
-      {
+    setIsProcessing(true);
+    setIsSellConfirmed(false);
+    try {
+      toast.info("Approving token spend...");
+      const approveHash = await writeContractAsync({
         address: tokenAddress,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [marketAddress, parsed],
-      },
-      {
-        onSuccess: () => {
-          sell({
-            address: marketAddress,
-            abi: MARKET_ABI,
-            functionName: "sell",
-            args: [isYes, parsed],
-          });
-        },
-      },
-    );
+        gas: 100_000n,
+      });
+      toast.info("Waiting for approval confirmation...");
+      await publicClient.waitForTransactionReceipt({ hash: approveHash });
+
+      toast.info("Sending sell transaction...");
+      const hash = await writeContractAsync({
+        address: marketAddress,
+        abi: MARKET_ABI,
+        functionName: "sell",
+        args: [isYes, parsed],
+        gas: 800_000n,
+      });
+      setSellTxHash(hash);
+      toast.info("Waiting for sell confirmation...");
+      await publicClient.waitForTransactionReceipt({ hash });
+      setIsSellConfirmed(true);
+      toast.success("Trade confirmed!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Transaction failed";
+      toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return {
     executeSell,
-    isLoading: isApproving || isApproveConfirming || isSelling || isSellConfirming,
+    isLoading: isProcessing,
     isSellConfirmed,
     sellTxHash,
   };
 }
 
 export function useClaim(marketAddress: `0x${string}`) {
-  const { writeContract, data: txHash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
+  const { writeContractAsync } = useWriteContract();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
-  const claim = () => {
-    writeContract({
-      address: marketAddress,
-      abi: MARKET_ABI,
-      functionName: "claim",
-    });
+  const claim = async () => {
+    setIsLoading(true);
+    try {
+      const hash = await writeContractAsync({
+        address: marketAddress,
+        abi: MARKET_ABI,
+        functionName: "claim",
+        gas: 300_000n,
+      });
+      setTxHash(hash);
+      await publicClient.waitForTransactionReceipt({ hash });
+      setIsSuccess(true);
+      toast.success("Winnings claimed!");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Claim failed";
+      toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  return { claim, isLoading: isPending || isConfirming, isSuccess, txHash };
+  return { claim, isLoading, isSuccess, txHash };
 }
 
 export function useTokenBalance(tokenAddress: `0x${string}`, userAddress: `0x${string}` | undefined) {

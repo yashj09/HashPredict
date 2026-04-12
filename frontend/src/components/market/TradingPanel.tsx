@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
 import { toast } from "sonner";
 import { useApproveAndBuy, useApproveAndSell, useTokenBalance, useUsdtBalance } from "@/hooks/useTrade";
+import { useGaslessBuy, useGaslessSell, useGaslessAvailable } from "@/hooks/useGaslessTrade";
 import type { MarketData } from "@/hooks/useMarkets";
 import { formatUSDT, cn } from "@/lib/utils";
 
@@ -22,9 +23,13 @@ export function TradingPanel({
   const [tab, setTab] = useState<Tab>("buy");
   const [side, setSide] = useState<Side>("yes");
   const [amount, setAmount] = useState("");
+  const [gasless, setGasless] = useState(true);
+
+  const gaslessAvailable = useGaslessAvailable();
 
   const tokenAddress = side === "yes" ? market.yesToken : market.noToken;
 
+  // Normal (gas-paying) hooks
   const {
     executeBuy,
     isLoading: isBuying,
@@ -37,6 +42,19 @@ export function TradingPanel({
     isSellConfirmed,
   } = useApproveAndSell(market.address, tokenAddress);
 
+  // Gasless hooks
+  const {
+    executeBuy: gaslessBuy,
+    isLoading: isGaslessBuying,
+    txHash: gaslessBuyTxHash,
+  } = useGaslessBuy(market.address, market.collateralToken);
+
+  const {
+    executeSell: gaslessSell,
+    isLoading: isGaslessSelling,
+    txHash: gaslessSellTxHash,
+  } = useGaslessSell(market.address, tokenAddress);
+
   const { data: usdtBalance } = useUsdtBalance(market.collateralToken, userAddress);
   const { data: yesBalance } = useTokenBalance(market.yesToken, userAddress);
   const { data: noBalance } = useTokenBalance(market.noToken, userAddress);
@@ -45,7 +63,6 @@ export function TradingPanel({
 
   useEffect(() => {
     if (isBuyConfirmed) {
-      toast.success(`Bought ${side.toUpperCase()} tokens!`);
       setAmount("");
       onTradeComplete?.();
     }
@@ -53,27 +70,50 @@ export function TradingPanel({
 
   useEffect(() => {
     if (isSellConfirmed) {
-      toast.success(`Sold ${side.toUpperCase()} tokens!`);
       setAmount("");
       onTradeComplete?.();
     }
   }, [isSellConfirmed]);
+
+  // Handle gasless tx completion via txHash changes
+  useEffect(() => {
+    if (gaslessBuyTxHash) {
+      setAmount("");
+      onTradeComplete?.();
+    }
+  }, [gaslessBuyTxHash]);
+
+  useEffect(() => {
+    if (gaslessSellTxHash) {
+      setAmount("");
+      onTradeComplete?.();
+    }
+  }, [gaslessSellTxHash]);
+
+  const useGaslessMode = gasless && gaslessAvailable;
 
   const handleTrade = () => {
     if (!amount || parseFloat(amount) <= 0) {
       toast.error("Enter a valid amount");
       return;
     }
-    if (tab === "buy") {
-      executeBuy(side === "yes", amount, 6);
+    if (useGaslessMode) {
+      if (tab === "buy") {
+        gaslessBuy(side === "yes", amount, 6);
+      } else {
+        gaslessSell(side === "yes", amount, 6);
+      }
     } else {
-      executeSell(side === "yes", amount, 18);
+      if (tab === "buy") {
+        executeBuy(side === "yes", amount, 6);
+      } else {
+        executeSell(side === "yes", amount, 6);
+      }
     }
   };
 
-  const isEnded = Number(market.endTimestamp) * 1000 < Date.now();
   const isDisabled = market.resolved || !userAddress;
-  const isLoading = isBuying || isSelling;
+  const isLoading = isBuying || isSelling || isGaslessBuying || isGaslessSelling;
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
@@ -134,7 +174,7 @@ export function TradingPanel({
                 ? formatUSDT(usdtBalance as bigint)
                 : "—"
               : tokenBalance != null
-                ? parseFloat(formatUnits(tokenBalance as bigint, 18)).toFixed(2)
+                ? parseFloat(formatUnits(tokenBalance as bigint, 6)).toFixed(2)
                 : "—"}
           </span>
         </div>
@@ -147,6 +187,33 @@ export function TradingPanel({
           disabled={isDisabled}
         />
       </div>
+
+      {/* Gasless toggle */}
+      {gaslessAvailable && (
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-zinc-400">Gasless</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-400 font-medium">
+              No gas fees
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGasless(!gasless)}
+            className={cn(
+              "relative w-9 h-5 rounded-full transition-colors",
+              gasless ? "bg-emerald-600" : "bg-zinc-700",
+            )}
+          >
+            <span
+              className={cn(
+                "absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform",
+                gasless && "translate-x-4",
+              )}
+            />
+          </button>
+        </div>
+      )}
 
       {/* Trade button */}
       <button
@@ -168,8 +235,8 @@ export function TradingPanel({
           : market.resolved
             ? "Market Resolved"
             : isLoading
-              ? "Confirming..."
-              : `${tab === "buy" ? "Buy" : "Sell"} ${side.toUpperCase()}`}
+              ? useGaslessMode ? "Signing..." : "Confirming..."
+              : `${tab === "buy" ? "Buy" : "Sell"} ${side.toUpperCase()}${useGaslessMode ? " (Gasless)" : ""}`}
       </button>
 
       {/* User positions */}
@@ -178,10 +245,10 @@ export function TradingPanel({
           <p className="text-xs text-zinc-500 mb-2">Your Positions</p>
           <div className="flex justify-between text-sm">
             <span className="text-emerald-400">
-              YES: {yesBalance != null ? parseFloat(formatUnits(yesBalance as bigint, 18)).toFixed(2) : "0"}
+              YES: {yesBalance != null ? parseFloat(formatUnits(yesBalance as bigint, 6)).toFixed(2) : "0"}
             </span>
             <span className="text-red-400">
-              NO: {noBalance != null ? parseFloat(formatUnits(noBalance as bigint, 18)).toFixed(2) : "0"}
+              NO: {noBalance != null ? parseFloat(formatUnits(noBalance as bigint, 6)).toFixed(2) : "0"}
             </span>
           </div>
         </div>

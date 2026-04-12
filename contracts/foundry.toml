@@ -11,6 +11,7 @@ via_ir = true
 hashkey_testnet = "https://testnet.hsk.xyz"
 hashkey_mainnet = "https://mainnet.hsk.xyz"
 
-[etherscan]
-hashkey_testnet = { key = "", chain = 133, url = "https://testnet-explorer.hsk.xyz/api" }
-hashkey_mainnet = { key = "", chain = 177, url = "https://hashkey.blockscout.com/api" }
+# Commented out: forge script fails with "Chain 133 not supported" when etherscan section is present
+# [etherscan]
+# hashkey_testnet = { key = "", chain = 133, url = "https://testnet-explorer.hsk.xyz/api" }
+# hashkey_mainnet = { key = "", chain = 177, url = "https://hashkey.blockscout.com/api" }

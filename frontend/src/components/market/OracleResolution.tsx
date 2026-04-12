@@ -6,12 +6,14 @@ import { formatUnits } from "viem";
 export function OracleResolution({
   marketAddress,
   resolved,
+  onResolved,
 }: {
   marketAddress: `0x${string}`;
   resolved: boolean;
+  onResolved?: () => void;
 }) {
   const { config, isLoading: configLoading } = useOracleConfig(marketAddress);
-  const { resolve, isLoading: resolving } = useResolveWithOracle(marketAddress);
+  const { resolve: resolveOracle, isLoading: resolving } = useResolveWithOracle(marketAddress);
 
   if (configLoading || !config) return null;
 
@@ -40,7 +42,7 @@ export function OracleResolution({
         <p className="text-xs text-zinc-500">Market already resolved.</p>
       ) : (
         <button
-          onClick={resolve}
+          onClick={async () => { await resolveOracle(); onResolved?.(); }}
           disabled={resolving}
           className="w-full py-2 rounded-lg text-sm font-medium bg-amber-600 hover:bg-amber-500 text-white transition-colors disabled:opacity-50"
         >

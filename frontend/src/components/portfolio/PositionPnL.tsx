@@ -72,8 +72,8 @@ export function PositionPnL({
       ): SidePnL | null => {
         if (bought === 0n || balance === 0n) return null;
         const avgEntry =
-          Number(cost) / 1e6 / (Number(bought) / 1e18);
-        const balF = Number(balance) / 1e18;
+          Number(cost) / Number(bought);
+        const balF = Number(balance) / 1e6;
         const pnl = (currentPrice - avgEntry) * balF;
         const pnlPercent =
           avgEntry > 0 ? ((currentPrice - avgEntry) / avgEntry) * 100 : 0;

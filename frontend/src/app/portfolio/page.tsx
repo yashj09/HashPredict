@@ -101,12 +101,12 @@ export default function PortfolioPage() {
                     <div className="text-right text-xs">
                       {pos.yesBalance > 0n && (
                         <p className="text-emerald-400">
-                          YES: {parseFloat(formatUnits(pos.yesBalance, 18)).toFixed(2)}
+                          YES: {parseFloat(formatUnits(pos.yesBalance, 6)).toFixed(2)}
                         </p>
                       )}
                       {pos.noBalance > 0n && (
                         <p className="text-red-400">
-                          NO: {parseFloat(formatUnits(pos.noBalance, 18)).toFixed(2)}
+                          NO: {parseFloat(formatUnits(pos.noBalance, 6)).toFixed(2)}
                         </p>
                       )}
                     </div>

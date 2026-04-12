@@ -6,6 +6,9 @@ import { useMarket } from "@/hooks/useMarket";
 import { MarketInfo } from "@/components/market/MarketInfo";
 import { TradingPanel } from "@/components/market/TradingPanel";
 import { ClaimPanel } from "@/components/market/ClaimPanel";
+import { PriceChart } from "@/components/market/PriceChart";
+import { TradeHistory } from "@/components/market/TradeHistory";
+import { OracleResolution } from "@/components/market/OracleResolution";
 
 export default function MarketPage() {
   const params = useParams();
@@ -43,18 +46,24 @@ export default function MarketPage() {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Market info */}
-        <div className="lg:col-span-2">
+        {/* Left: Market info + chart + trade history */}
+        <div className="lg:col-span-2 space-y-6">
           <MarketInfo market={market} />
+          <PriceChart marketAddress={address} />
+          <TradeHistory marketAddress={address} />
         </div>
 
-        {/* Right: Trading panel */}
+        {/* Right: Trading panel + Oracle */}
         <div className="space-y-4">
           {market.resolved ? (
             <ClaimPanel market={market} />
           ) : (
             <TradingPanel market={market} onTradeComplete={refetch} />
           )}
+          <OracleResolution
+            marketAddress={address}
+            resolved={market.resolved}
+          />
         </div>
       </div>
     </div>

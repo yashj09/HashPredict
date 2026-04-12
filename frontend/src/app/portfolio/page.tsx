@@ -8,6 +8,7 @@ import { useClaim } from "@/hooks/useTrade";
 import { formatUSDT, cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { PositionPnL } from "@/components/portfolio/PositionPnL";
 
 function ClaimButton({ marketAddress, resolved }: { marketAddress: `0x${string}`; resolved: boolean }) {
   const { claim, isLoading, isSuccess } = useClaim(marketAddress);
@@ -86,6 +87,14 @@ export default function PortfolioPage() {
                     <p className="text-xs text-zinc-500 mt-1">
                       Prob: {yesPercent.toFixed(1)}% YES | Vol: ${formatUSDT(pos.market.totalVolume)}
                     </p>
+                    {!pos.market.resolved && (
+                      <PositionPnL
+                        marketAddress={pos.market.address}
+                        userAddress={userAddress}
+                        yesBalance={pos.yesBalance}
+                        noBalance={pos.noBalance}
+                      />
+                    )}
                   </div>
 
                   <div className="flex items-center gap-4 shrink-0">

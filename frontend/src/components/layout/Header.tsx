@@ -32,6 +32,12 @@ export function Header() {
                 Portfolio
               </Link>
               <Link
+                href="/leaderboard"
+                className="text-zinc-400 hover:text-white transition-colors text-sm"
+              >
+                Leaderboard
+              </Link>
+              <Link
                 href="/faucet"
                 className="text-zinc-400 hover:text-white transition-colors text-sm"
               >

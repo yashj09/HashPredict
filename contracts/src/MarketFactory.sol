@@ -16,6 +16,7 @@ contract MarketFactory is Ownable {
     mapping(address => bool) public whitelistedCollaterals;
     mapping(address => bool) public isMarket;
     mapping(address => bool) public authorizedResolvers;
+    address public trustedForwarder;
 
     uint256 public creationFeeBps = 100; // 1%
     uint256 public constant BPS = 10_000;
@@ -66,14 +67,15 @@ contract MarketFactory is Ownable {
             IERC20(collateralToken_).safeTransfer(owner(), fee);
         }
 
-        // Deploy market
+        // Deploy market (pass trustedForwarder for gasless meta-tx support)
         PredictionMarket newMarket = new PredictionMarket(
             collateralToken_,
             question,
             category,
             endTimestamp,
             address(this), // resolver = factory (factory.resolveMarket calls market)
-            address(this)
+            address(this),
+            trustedForwarder
         );
 
         // Approve and initialize market with liquidity
@@ -107,6 +109,11 @@ contract MarketFactory is Ownable {
     /// @notice Update minimum liquidity
     function setMinimumLiquidity(uint256 newMin) external onlyOwner {
         minimumLiquidity = newMin;
+    }
+
+    /// @notice Set the trusted forwarder for ERC-2771 gasless meta-transactions
+    function setTrustedForwarder(address forwarder) external onlyOwner {
+        trustedForwarder = forwarder;
     }
 
     /// @notice Resolve a market (convenience function for owner)

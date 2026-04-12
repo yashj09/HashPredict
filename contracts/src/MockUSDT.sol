@@ -2,12 +2,13 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
-/// @title MockUSDT - Test USDT token with public faucet for hackathon demo
-contract MockUSDT is ERC20 {
+/// @title MockUSDT - Test USDT token with public faucet and gasless approvals (EIP-2612)
+contract MockUSDT is ERC20, ERC20Permit {
     uint8 private constant DECIMALS = 6;
 
-    constructor() ERC20("Mock USDT", "USDT") {
+    constructor() ERC20("Mock USDT", "USDT") ERC20Permit("Mock USDT") {
         _mint(msg.sender, 1_000_000 * 10 ** DECIMALS);
     }
 

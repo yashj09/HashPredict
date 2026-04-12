@@ -5,11 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "./OutcomeToken.sol";
 
 /// @title PredictionMarket - A CPMM-based binary prediction market
 /// @notice Users buy/sell YES or NO outcome tokens. After resolution, winners redeem 1:1 for collateral.
-contract PredictionMarket is ReentrancyGuard {
+///         Supports gasless meta-transactions via ERC-2771 trusted forwarder.
+contract PredictionMarket is ReentrancyGuard, ERC2771Context {
     using SafeERC20 for IERC20;
     using SafeERC20 for OutcomeToken;
     using Math for uint256;
@@ -77,8 +79,9 @@ contract PredictionMarket is ReentrancyGuard {
         string memory category_,
         uint256 endTimestamp_,
         address resolver_,
-        address factory_
-    ) {
+        address factory_,
+        address trustedForwarder_
+    ) ERC2771Context(trustedForwarder_) {
         require(endTimestamp_ > block.timestamp, "PredictionMarket: end must be future");
 
         collateralToken = IERC20(collateralToken_);
@@ -140,8 +143,9 @@ contract PredictionMarket is ReentrancyGuard {
     function buy(bool isYes, uint256 collateralAmount) external nonReentrant marketActive returns (uint256 tokensOut) {
         require(collateralAmount > 0, "PredictionMarket: zero amount");
 
-        // Transfer collateral from user
-        collateralToken.safeTransferFrom(msg.sender, address(this), collateralAmount);
+        // Transfer collateral from user (_msgSender() supports meta-tx via ERC-2771)
+        address sender = _msgSender();
+        collateralToken.safeTransferFrom(sender, address(this), collateralAmount);
 
         // Take fee
         uint256 fee = (collateralAmount * FEE_BPS) / BPS;
@@ -165,7 +169,7 @@ contract PredictionMarket is ReentrancyGuard {
 
             // User gets: minted YES + swapped YES
             tokensOut = effectiveAmount + yesFromSwap;
-            yesToken.safeTransfer(msg.sender, tokensOut);
+            yesToken.safeTransfer(sender, tokensOut);
         } else {
             // Add YES to pool, take NO out
             uint256 k = yesReserve * noReserve;
@@ -177,11 +181,11 @@ contract PredictionMarket is ReentrancyGuard {
             noReserve = newNoReserve;
 
             tokensOut = effectiveAmount + noFromSwap;
-            noToken.safeTransfer(msg.sender, tokensOut);
+            noToken.safeTransfer(sender, tokensOut);
         }
 
         totalVolume += collateralAmount;
-        emit Buy(msg.sender, isYes, collateralAmount, tokensOut);
+        emit Buy(sender, isYes, collateralAmount, tokensOut);
     }
 
     /// @notice Sell outcome tokens back for collateral
@@ -190,10 +194,11 @@ contract PredictionMarket is ReentrancyGuard {
     /// @return collateralOut Amount of collateral received
     function sell(bool isYes, uint256 tokenAmount) external nonReentrant marketActive returns (uint256 collateralOut) {
         require(tokenAmount > 0, "PredictionMarket: zero amount");
+        address sender = _msgSender();
 
         if (isYes) {
             // Transfer YES tokens from user and add to pool
-            yesToken.safeTransferFrom(msg.sender, address(this), tokenAmount);
+            yesToken.safeTransferFrom(sender, address(this), tokenAmount);
             uint256 k = yesReserve * noReserve;
             uint256 newYesReserve = yesReserve + tokenAmount;
             uint256 newNoReserve = k / newYesReserve;
@@ -212,7 +217,7 @@ contract PredictionMarket is ReentrancyGuard {
             collateralOut = noFreed - fee;
         } else {
             // Transfer NO tokens from user and add to pool
-            noToken.safeTransferFrom(msg.sender, address(this), tokenAmount);
+            noToken.safeTransferFrom(sender, address(this), tokenAmount);
             uint256 k = yesReserve * noReserve;
             uint256 newNoReserve = noReserve + tokenAmount;
             uint256 newYesReserve = k / newNoReserve;
@@ -229,10 +234,10 @@ contract PredictionMarket is ReentrancyGuard {
             collateralOut = yesFreed - fee;
         }
 
-        collateralToken.safeTransfer(msg.sender, collateralOut);
+        collateralToken.safeTransfer(sender, collateralOut);
         totalVolume += collateralOut;
 
-        emit Sell(msg.sender, isYes, tokenAmount, collateralOut);
+        emit Sell(sender, isYes, tokenAmount, collateralOut);
     }
 
     // ========================
@@ -244,8 +249,9 @@ contract PredictionMarket is ReentrancyGuard {
     function addLiquidity(uint256 collateralAmount) external nonReentrant marketActive {
         require(collateralAmount > 0, "PredictionMarket: zero amount");
         require(totalLpShares > 0, "PredictionMarket: not initialized");
+        address sender = _msgSender();
 
-        collateralToken.safeTransferFrom(msg.sender, address(this), collateralAmount);
+        collateralToken.safeTransferFrom(sender, address(this), collateralAmount);
 
         // Calculate LP shares proportionally
         uint256 shares = (collateralAmount * totalLpShares) / totalCollateral;
@@ -261,16 +267,17 @@ contract PredictionMarket is ReentrancyGuard {
         noReserve += noToMint;
         totalCollateral += collateralAmount;
 
-        lpShares[msg.sender] += shares;
+        lpShares[sender] += shares;
         totalLpShares += shares;
 
-        emit LiquidityAdded(msg.sender, collateralAmount, shares);
+        emit LiquidityAdded(sender, collateralAmount, shares);
     }
 
     /// @notice Remove liquidity from the pool
     /// @param shares Amount of LP shares to burn
     function removeLiquidity(uint256 shares) external nonReentrant marketActive {
-        require(shares > 0 && shares <= lpShares[msg.sender], "PredictionMarket: invalid shares");
+        address sender = _msgSender();
+        require(shares > 0 && shares <= lpShares[sender], "PredictionMarket: invalid shares");
 
         uint256 yesAmount = (shares * yesReserve) / totalLpShares;
         uint256 noAmount = (shares * noReserve) / totalLpShares;
@@ -285,20 +292,20 @@ contract PredictionMarket is ReentrancyGuard {
         noReserve -= noAmount;
         totalCollateral -= matched;
 
-        lpShares[msg.sender] -= shares;
+        lpShares[sender] -= shares;
         totalLpShares -= shares;
 
         // Return collateral for matched pairs
-        collateralToken.safeTransfer(msg.sender, matched);
+        collateralToken.safeTransfer(sender, matched);
 
         // Transfer any unmatched outcome tokens directly to the LP
         if (yesAmount > noAmount) {
-            yesToken.mint(msg.sender, yesAmount - matched);
+            yesToken.mint(sender, yesAmount - matched);
         } else if (noAmount > yesAmount) {
-            noToken.mint(msg.sender, noAmount - matched);
+            noToken.mint(sender, noAmount - matched);
         }
 
-        emit LiquidityRemoved(msg.sender, shares, matched);
+        emit LiquidityRemoved(sender, shares, matched);
     }
 
     // ========================
@@ -329,17 +336,18 @@ contract PredictionMarket is ReentrancyGuard {
 
     /// @notice Claim winnings after market resolution
     function claim() external nonReentrant marketResolved {
-        require(!claimed[msg.sender], "PredictionMarket: already claimed");
+        address sender = _msgSender();
+        require(!claimed[sender], "PredictionMarket: already claimed");
 
         OutcomeToken winningToken = outcomeYes ? yesToken : noToken;
-        uint256 balance = winningToken.balanceOf(msg.sender);
+        uint256 balance = winningToken.balanceOf(sender);
         require(balance > 0, "PredictionMarket: no winnings");
 
-        claimed[msg.sender] = true;
-        winningToken.burn(msg.sender, balance);
-        collateralToken.safeTransfer(msg.sender, balance);
+        claimed[sender] = true;
+        winningToken.burn(sender, balance);
+        collateralToken.safeTransfer(sender, balance);
 
-        emit WinningsClaimed(msg.sender, balance);
+        emit WinningsClaimed(sender, balance);
     }
 
     // ========================

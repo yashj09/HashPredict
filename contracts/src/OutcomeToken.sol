@@ -18,6 +18,10 @@ contract OutcomeToken is ERC20, ERC20Permit {
         market = market_;
     }
 
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
     function mint(address to, uint256 amount) external onlyMarket {
         _mint(to, amount);
     }

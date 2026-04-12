@@ -70,7 +70,7 @@ export function useApproveAndSell(
   const [isSellConfirmed, setIsSellConfirmed] = useState(false);
   const [sellTxHash, setSellTxHash] = useState<`0x${string}` | undefined>();
 
-  const executeSell = async (isYes: boolean, amount: string, decimals: number = 18) => {
+  const executeSell = async (isYes: boolean, amount: string, decimals: number = 6) => {
     const parsed = parseUnits(amount, decimals);
     setIsProcessing(true);
     setIsSellConfirmed(false);

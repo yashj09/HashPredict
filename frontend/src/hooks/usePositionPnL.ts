@@ -7,10 +7,10 @@ import { MARKET_ABI } from "@/lib/contracts";
 
 export interface PnLData {
   totalCost: bigint; // USDT spent (6 decimals)
-  totalTokensBought: bigint; // tokens received (18 decimals)
+  totalTokensBought: bigint; // tokens received (6 decimals)
   avgEntryPrice: number; // 0–1 scale (e.g., 0.65 = 65 cents)
   currentPrice: number; // 0–1 scale
-  currentBalance: bigint; // token balance (18 decimals)
+  currentBalance: bigint; // token balance (6 decimals)
   unrealizedPnL: number; // in USDT (decimal, e.g., 12.50)
   unrealizedPnLPercent: number; // percentage
 }
@@ -70,13 +70,13 @@ export function usePositionPnL(
         if (totalTokensBought === 0n && currentBalance === 0n) return null;
 
         // avgEntryPrice in 0–1 scale
-        // totalCost is 6 decimals (USDT), totalTokensBought is 18 decimals
+        // Both totalCost and totalTokensBought are 6 decimals (matching collateral)
         const avgEntryPrice =
           totalTokensBought > 0n
-            ? Number(totalCost) / 1e6 / (Number(totalTokensBought) / 1e18)
+            ? Number(totalCost) / Number(totalTokensBought)
             : 0;
 
-        const balanceFloat = Number(currentBalance) / 1e18;
+        const balanceFloat = Number(currentBalance) / 1e6;
         const unrealizedPnL =
           (currentPrice - avgEntryPrice) * balanceFloat;
         const unrealizedPnLPercent =

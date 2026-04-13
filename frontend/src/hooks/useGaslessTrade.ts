@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useWalletClient, useReadContract } from "wagmi";
 import { encodeFunctionData, parseUnits, maxUint256 } from "viem";
 import { toast } from "sonner";
 import { FORWARDER_ADDRESS, FORWARDER_ABI, MARKET_ABI, USDT_ABI } from "@/lib/contracts";
 import { publicClient } from "@/lib/publicClient";
+import { getEmbeddedWallet, getEmbeddedWalletClient, getEmbeddedAccount } from "@/lib/embeddedWallet";
 
 // EIP-712 types for the ERC2771Forwarder
 const FORWARD_REQUEST_TYPES = {
@@ -31,7 +31,7 @@ const PERMIT_TYPES = {
   ],
 } as const;
 
-const CHAIN_ID = 133; // HashKey Chain Testnet
+const CHAIN_ID = 133;
 
 async function getForwarderNonce(userAddress: `0x${string}`): Promise<bigint> {
   return publicClient.readContract({
@@ -110,18 +110,116 @@ export function useGaslessAvailable() {
   return FORWARDER_ADDRESS !== "0x0000000000000000000000000000000000000000";
 }
 
+/**
+ * Auto-sign a permit using the embedded wallet. No MetaMask popup.
+ * Returns the permit payload, or undefined if allowance is already sufficient.
+ */
+async function autoSignPermit(
+  walletClient: ReturnType<typeof getEmbeddedWalletClient>,
+  account: ReturnType<typeof getEmbeddedAccount>,
+  tokenAddress: `0x${string}`,
+  ownerAddress: `0x${string}`,
+  spenderAddress: `0x${string}`,
+  amount: bigint,
+) {
+  const currentAllowance = await getAllowance(tokenAddress, ownerAddress, spenderAddress);
+  if (currentAllowance >= amount) return undefined;
+
+  const [permitNonce, tokenName] = await Promise.all([
+    getPermitNonce(tokenAddress, ownerAddress),
+    getTokenName(tokenAddress),
+  ]);
+
+  const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
+
+  const sig = await walletClient.signTypedData({
+    account,
+    domain: {
+      name: tokenName,
+      version: "1",
+      chainId: CHAIN_ID,
+      verifyingContract: tokenAddress,
+    },
+    types: PERMIT_TYPES,
+    primaryType: "Permit",
+    message: {
+      owner: ownerAddress,
+      spender: spenderAddress,
+      value: maxUint256,
+      nonce: permitNonce,
+      deadline,
+    },
+  });
+
+  return {
+    token: tokenAddress,
+    owner: ownerAddress,
+    spender: spenderAddress,
+    value: maxUint256.toString(),
+    deadline: deadline.toString(),
+    v: parseInt(sig.slice(130, 132), 16),
+    r: `0x${sig.slice(2, 66)}` as `0x${string}`,
+    s: `0x${sig.slice(66, 130)}` as `0x${string}`,
+  };
+}
+
+/**
+ * Auto-sign a ForwardRequest using the embedded wallet. No MetaMask popup.
+ */
+async function autoSignForwardRequest(
+  walletClient: ReturnType<typeof getEmbeddedWalletClient>,
+  account: ReturnType<typeof getEmbeddedAccount>,
+  from: `0x${string}`,
+  to: `0x${string}`,
+  data: `0x${string}`,
+  gas: bigint,
+) {
+  const forwarderNonce = await getForwarderNonce(from);
+  const deadline = Math.floor(Date.now() / 1000) + 3600;
+
+  const sig = await walletClient.signTypedData({
+    account,
+    domain: {
+      name: "HashPredictForwarder",
+      version: "1",
+      chainId: CHAIN_ID,
+      verifyingContract: FORWARDER_ADDRESS,
+    },
+    types: FORWARD_REQUEST_TYPES,
+    primaryType: "ForwardRequest",
+    message: {
+      from,
+      to,
+      value: 0n,
+      gas,
+      nonce: forwarderNonce,
+      deadline,
+      data,
+    },
+  });
+
+  return {
+    from,
+    to,
+    value: "0",
+    gas: gas.toString(),
+    deadline,
+    data,
+    signature: sig,
+  };
+}
+
 export function useGaslessBuy(
   marketAddress: `0x${string}`,
   collateralToken: `0x${string}`,
 ) {
-  const { address } = useAccount();
-  const { data: walletClient } = useWalletClient();
   const [isProcessing, setIsProcessing] = useState(false);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   const executeBuy = async (isYes: boolean, amount: string, decimals: number = 6) => {
-    if (!address || !walletClient) {
-      toast.error("Please connect your wallet");
+    const wallet = getEmbeddedWallet();
+    if (!wallet) {
+      toast.error("Create a trading wallet first");
       return;
     }
 
@@ -130,117 +228,31 @@ export function useGaslessBuy(
     setTxHash(undefined);
 
     try {
-      toast.info("Preparing gasless transaction...");
+      toast.info("Executing trade...");
+      const walletClient = getEmbeddedWalletClient(wallet);
+      const account = getEmbeddedAccount(wallet);
 
-      // Check if market already has sufficient USDT allowance — skip permit if so
-      const [forwarderNonce, currentAllowance] = await Promise.all([
-        getForwarderNonce(address),
-        getAllowance(collateralToken, address, marketAddress),
-      ]);
+      // Auto-sign permit if needed (no popup)
+      const permit = await autoSignPermit(
+        walletClient, account, collateralToken, wallet.address, marketAddress, parsed,
+      );
 
-      let permit: {
-        token: `0x${string}`;
-        owner: `0x${string}`;
-        spender: `0x${string}`;
-        value: string;
-        deadline: string;
-        v: number;
-        r: `0x${string}`;
-        s: `0x${string}`;
-      } | undefined;
-
-      if (currentAllowance < parsed) {
-        // Need permit — approve maxUint256 so this is a one-time signature
-        const [permitNonce, tokenName] = await Promise.all([
-          getPermitNonce(collateralToken, address),
-          getTokenName(collateralToken),
-        ]);
-
-        const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
-
-        toast.info("One-time approval needed — sign to approve USDT...");
-        const permitSig = await walletClient.signTypedData({
-          domain: {
-            name: tokenName,
-            version: "1",
-            chainId: CHAIN_ID,
-            verifyingContract: collateralToken,
-          },
-          types: PERMIT_TYPES,
-          primaryType: "Permit",
-          message: {
-            owner: address,
-            spender: marketAddress,
-            value: maxUint256,
-            nonce: permitNonce,
-            deadline,
-          },
-        });
-
-        const permitR = `0x${permitSig.slice(2, 66)}` as `0x${string}`;
-        const permitS = `0x${permitSig.slice(66, 130)}` as `0x${string}`;
-        const permitV = parseInt(permitSig.slice(130, 132), 16);
-
-        permit = {
-          token: collateralToken,
-          owner: address,
-          spender: marketAddress,
-          value: maxUint256.toString(),
-          deadline: deadline.toString(),
-          v: permitV,
-          r: permitR,
-          s: permitS,
-        };
-      }
-
-      // Sign the ForwardRequest for the buy call
+      // Auto-sign the ForwardRequest (no popup)
       const buyCalldata = encodeFunctionData({
         abi: MARKET_ABI,
         functionName: "buy",
         args: [isYes, parsed],
       });
 
-      const forwardDeadline = Math.floor(Date.now() / 1000) + 3600;
+      const forwardRequest = await autoSignForwardRequest(
+        walletClient, account, wallet.address, marketAddress, buyCalldata, 800_000n,
+      );
 
-      toast.info("Sign to confirm trade...");
-      const forwardSig = await walletClient.signTypedData({
-        domain: {
-          name: "HashPredictForwarder",
-          version: "1",
-          chainId: CHAIN_ID,
-          verifyingContract: FORWARDER_ADDRESS,
-        },
-        types: FORWARD_REQUEST_TYPES,
-        primaryType: "ForwardRequest",
-        message: {
-          from: address,
-          to: marketAddress,
-          value: 0n,
-          gas: 800_000n,
-          nonce: forwarderNonce,
-          deadline: forwardDeadline,
-          data: buyCalldata,
-        },
-      });
-
-      toast.info("Submitting to relayer...");
-      const result = await submitToRelayer({
-        permit,
-        forwardRequest: {
-          from: address,
-          to: marketAddress,
-          value: "0",
-          gas: "800000",
-          deadline: forwardDeadline,
-          data: buyCalldata,
-          signature: forwardSig,
-        },
-      });
-
+      const result = await submitToRelayer({ permit, forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Gasless trade confirmed!");
+      toast.success("Trade confirmed!");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gasless transaction failed";
+      const msg = err instanceof Error ? err.message : "Trade failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
     } finally {
       setIsProcessing(false);
@@ -254,14 +266,13 @@ export function useGaslessSell(
   marketAddress: `0x${string}`,
   tokenAddress: `0x${string}`,
 ) {
-  const { address } = useAccount();
-  const { data: walletClient } = useWalletClient();
   const [isProcessing, setIsProcessing] = useState(false);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   const executeSell = async (isYes: boolean, amount: string, decimals: number = 6) => {
-    if (!address || !walletClient) {
-      toast.error("Please connect your wallet");
+    const wallet = getEmbeddedWallet();
+    if (!wallet) {
+      toast.error("Create a trading wallet first");
       return;
     }
 
@@ -270,66 +281,14 @@ export function useGaslessSell(
     setTxHash(undefined);
 
     try {
-      toast.info("Preparing gasless sell...");
+      toast.info("Executing sell...");
+      const walletClient = getEmbeddedWalletClient(wallet);
+      const account = getEmbeddedAccount(wallet);
 
-      const [forwarderNonce, currentAllowance] = await Promise.all([
-        getForwarderNonce(address),
-        getAllowance(tokenAddress, address, marketAddress),
-      ]);
-
-      let permit: {
-        token: `0x${string}`;
-        owner: `0x${string}`;
-        spender: `0x${string}`;
-        value: string;
-        deadline: string;
-        v: number;
-        r: `0x${string}`;
-        s: `0x${string}`;
-      } | undefined;
-
-      if (currentAllowance < parsed) {
-        const [permitNonce, tokenName] = await Promise.all([
-          getPermitNonce(tokenAddress, address),
-          getTokenName(tokenAddress),
-        ]);
-
-        const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600);
-
-        toast.info("One-time approval needed — sign to approve token...");
-        const permitSig = await walletClient.signTypedData({
-          domain: {
-            name: tokenName,
-            version: "1",
-            chainId: CHAIN_ID,
-            verifyingContract: tokenAddress,
-          },
-          types: PERMIT_TYPES,
-          primaryType: "Permit",
-          message: {
-            owner: address,
-            spender: marketAddress,
-            value: maxUint256,
-            nonce: permitNonce,
-            deadline,
-          },
-        });
-
-        const permitR = `0x${permitSig.slice(2, 66)}` as `0x${string}`;
-        const permitS = `0x${permitSig.slice(66, 130)}` as `0x${string}`;
-        const permitV = parseInt(permitSig.slice(130, 132), 16);
-
-        permit = {
-          token: tokenAddress,
-          owner: address,
-          spender: marketAddress,
-          value: maxUint256.toString(),
-          deadline: deadline.toString(),
-          v: permitV,
-          r: permitR,
-          s: permitS,
-        };
-      }
+      // Auto-sign permit for outcome token if needed
+      const permit = await autoSignPermit(
+        walletClient, account, tokenAddress, wallet.address, marketAddress, parsed,
+      );
 
       const sellCalldata = encodeFunctionData({
         abi: MARKET_ABI,
@@ -337,47 +296,15 @@ export function useGaslessSell(
         args: [isYes, parsed],
       });
 
-      const forwardDeadline = Math.floor(Date.now() / 1000) + 3600;
+      const forwardRequest = await autoSignForwardRequest(
+        walletClient, account, wallet.address, marketAddress, sellCalldata, 800_000n,
+      );
 
-      toast.info("Sign to confirm sell...");
-      const forwardSig = await walletClient.signTypedData({
-        domain: {
-          name: "HashPredictForwarder",
-          version: "1",
-          chainId: CHAIN_ID,
-          verifyingContract: FORWARDER_ADDRESS,
-        },
-        types: FORWARD_REQUEST_TYPES,
-        primaryType: "ForwardRequest",
-        message: {
-          from: address,
-          to: marketAddress,
-          value: 0n,
-          gas: 800_000n,
-          nonce: forwarderNonce,
-          deadline: forwardDeadline,
-          data: sellCalldata,
-        },
-      });
-
-      toast.info("Submitting to relayer...");
-      const result = await submitToRelayer({
-        permit,
-        forwardRequest: {
-          from: address,
-          to: marketAddress,
-          value: "0",
-          gas: "800000",
-          deadline: forwardDeadline,
-          data: sellCalldata,
-          signature: forwardSig,
-        },
-      });
-
+      const result = await submitToRelayer({ permit, forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Gasless sell confirmed!");
+      toast.success("Sell confirmed!");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gasless sell failed";
+      const msg = err instanceof Error ? err.message : "Sell failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
     } finally {
       setIsProcessing(false);
@@ -388,14 +315,13 @@ export function useGaslessSell(
 }
 
 export function useGaslessClaim(marketAddress: `0x${string}`) {
-  const { address } = useAccount();
-  const { data: walletClient } = useWalletClient();
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
   const claim = async () => {
-    if (!address || !walletClient) {
-      toast.error("Please connect your wallet");
+    const wallet = getEmbeddedWallet();
+    if (!wallet) {
+      toast.error("Create a trading wallet first");
       return;
     }
 
@@ -403,54 +329,24 @@ export function useGaslessClaim(marketAddress: `0x${string}`) {
     setTxHash(undefined);
 
     try {
-      toast.info("Preparing gasless claim...");
-      const forwarderNonce = await getForwarderNonce(address);
+      toast.info("Claiming winnings...");
+      const walletClient = getEmbeddedWalletClient(wallet);
+      const account = getEmbeddedAccount(wallet);
 
       const claimCalldata = encodeFunctionData({
         abi: MARKET_ABI,
         functionName: "claim",
       });
 
-      const forwardDeadline = Math.floor(Date.now() / 1000) + 3600;
+      const forwardRequest = await autoSignForwardRequest(
+        walletClient, account, wallet.address, marketAddress, claimCalldata, 300_000n,
+      );
 
-      toast.info("Sign the claim transaction...");
-      const forwardSig = await walletClient.signTypedData({
-        domain: {
-          name: "HashPredictForwarder",
-          version: "1",
-          chainId: CHAIN_ID,
-          verifyingContract: FORWARDER_ADDRESS,
-        },
-        types: FORWARD_REQUEST_TYPES,
-        primaryType: "ForwardRequest",
-        message: {
-          from: address,
-          to: marketAddress,
-          value: 0n,
-          gas: 300_000n,
-          nonce: forwarderNonce,
-          deadline: forwardDeadline,
-          data: claimCalldata,
-        },
-      });
-
-      toast.info("Submitting to relayer...");
-      const result = await submitToRelayer({
-        forwardRequest: {
-          from: address,
-          to: marketAddress,
-          value: "0",
-          gas: "300000",
-          deadline: forwardDeadline,
-          data: claimCalldata,
-          signature: forwardSig,
-        },
-      });
-
+      const result = await submitToRelayer({ forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Gasless claim confirmed!");
+      toast.success("Winnings claimed!");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Gasless claim failed";
+      const msg = err instanceof Error ? err.message : "Claim failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
     } finally {
       setIsLoading(false);

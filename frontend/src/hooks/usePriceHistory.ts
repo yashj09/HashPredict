@@ -25,6 +25,7 @@ export function usePriceHistory(marketAddress: `0x${string}`) {
   return useQuery<PricePoint[]>({
     queryKey: ["priceHistory", marketAddress],
     staleTime: 30_000,
+    retry: 1,
     queryFn: async () => {
       const [initialLiquidity, events] = await Promise.all([
         fetchInitialLiquidity(marketAddress),

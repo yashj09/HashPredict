@@ -2,33 +2,36 @@
 
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
-import { useEffect } from "react";
-import { toast } from "sonner";
-import { useClaim, useTokenBalance } from "@/hooks/useTrade";
+import { useState, useEffect } from "react";
 import { useGaslessClaim, useGaslessAvailable } from "@/hooks/useGaslessTrade";
+import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
 import type { MarketData } from "@/hooks/useMarkets";
+import { publicClient } from "@/lib/publicClient";
+import { ERC20_ABI } from "@/lib/contracts";
 
 export function ClaimPanel({ market }: { market: MarketData }) {
   const { address: userAddress } = useAccount();
-  const winningToken = market.outcomeYes ? market.yesToken : market.noToken;
-  const { data: winningBalance } = useTokenBalance(winningToken, userAddress);
-  const { claim, isLoading, isSuccess } = useClaim(market.address);
-  const { claim: gaslessClaim, isLoading: isGaslessClaiming, txHash: gaslessClaimTxHash } = useGaslessClaim(market.address);
+  const { wallet } = useEmbeddedWallet();
   const gaslessAvailable = useGaslessAvailable();
+  const winningToken = market.outcomeYes ? market.yesToken : market.noToken;
 
-  const balance = winningBalance as bigint | undefined;
-  const hasWinnings = balance != null && balance > 0n;
+  const { claim: gaslessClaim, isLoading: isGaslessClaiming } = useGaslessClaim(market.address);
 
+  // Read winning balance from embedded wallet
+  const [winningBalance, setWinningBalance] = useState<bigint>(0n);
   useEffect(() => {
-    if (isSuccess) {
-      toast.success("Winnings claimed!");
-    }
-  }, [isSuccess]);
+    if (!wallet) return;
+    publicClient.readContract({
+      address: winningToken,
+      abi: ERC20_ABI,
+      functionName: "balanceOf",
+      args: [wallet.address],
+    }).then((bal) => setWinningBalance(bal as bigint)).catch(() => {});
+  }, [wallet, winningToken]);
+
+  const hasWinnings = winningBalance > 0n;
 
   if (!market.resolved || !userAddress) return null;
-
-  const handleClaim = gaslessAvailable ? gaslessClaim : claim;
-  const claimLoading = isLoading || isGaslessClaiming;
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
@@ -39,15 +42,15 @@ export function ClaimPanel({ market }: { market: MarketData }) {
       <p className="text-xs text-zinc-500 mb-4">
         Your winning tokens:{" "}
         <span className="text-white font-medium">
-          {hasWinnings ? parseFloat(formatUnits(balance, 6)).toFixed(2) : "0"}
+          {hasWinnings ? parseFloat(formatUnits(winningBalance, 6)).toFixed(2) : "0"}
         </span>
       </p>
       <button
-        onClick={handleClaim}
-        disabled={!hasWinnings || claimLoading}
+        onClick={gaslessClaim}
+        disabled={!hasWinnings || isGaslessClaiming || !wallet}
         className="w-full py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed"
       >
-        {claimLoading ? "Claiming..." : hasWinnings ? `Claim Winnings${gaslessAvailable ? " (Gasless)" : ""}` : "No Winnings to Claim"}
+        {isGaslessClaiming ? "Claiming..." : hasWinnings ? "Claim Winnings" : "No Winnings to Claim"}
       </button>
     </div>
   );

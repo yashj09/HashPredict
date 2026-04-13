@@ -1,27 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { useClaim } from "@/hooks/useTrade";
+import { useGaslessClaim } from "@/hooks/useGaslessTrade";
+import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
+import { MARKET_ABI } from "@/lib/contracts";
 import { formatUSDT, cn } from "@/lib/utils";
-import { useEffect } from "react";
-import { toast } from "sonner";
 import { PositionPnL } from "@/components/portfolio/PositionPnL";
 
-function ClaimButton({ marketAddress, resolved }: { marketAddress: `0x${string}`; resolved: boolean }) {
-  const { claim, isLoading, isSuccess } = useClaim(marketAddress);
+function ClaimButton({
+  marketAddress,
+  resolved,
+  userAddress,
+  onClaimed,
+}: {
+  marketAddress: `0x${string}`;
+  resolved: boolean;
+  userAddress: `0x${string}`;
+  onClaimed?: () => void;
+}) {
+  const { claim, isLoading } = useGaslessClaim(marketAddress);
+  const { data: hasClaimed } = useReadContract({
+    address: marketAddress,
+    abi: MARKET_ABI,
+    functionName: "claimed",
+    args: [userAddress],
+    query: { enabled: resolved },
+  });
 
-  useEffect(() => {
-    if (isSuccess) toast.success("Winnings claimed!");
-  }, [isSuccess]);
-
-  if (!resolved) return null;
+  if (!resolved || hasClaimed) return null;
 
   return (
     <button
-      onClick={(e) => { e.preventDefault(); claim(); }}
+      onClick={async (e) => {
+        e.preventDefault();
+        await claim();
+        onClaimed?.();
+      }}
       disabled={isLoading}
       className="px-3 py-1 rounded-md text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:opacity-50"
     >
@@ -32,7 +49,9 @@ function ClaimButton({ marketAddress, resolved }: { marketAddress: `0x${string}`
 
 export default function PortfolioPage() {
   const { address: userAddress } = useAccount();
-  const { positions, isLoading } = usePortfolio();
+  const { wallet } = useEmbeddedWallet();
+  const { positions, isLoading, refetch } = usePortfolio();
+  const portfolioAddress = wallet?.address ?? userAddress;
 
   if (!userAddress) {
     return (
@@ -87,10 +106,10 @@ export default function PortfolioPage() {
                     <p className="text-xs text-zinc-500 mt-1">
                       Prob: {yesPercent.toFixed(1)}% YES | Vol: ${formatUSDT(pos.market.totalVolume)}
                     </p>
-                    {!pos.market.resolved && (
+                    {!pos.market.resolved && portfolioAddress && (
                       <PositionPnL
                         marketAddress={pos.market.address}
-                        userAddress={userAddress}
+                        userAddress={portfolioAddress}
                         yesBalance={pos.yesBalance}
                         noBalance={pos.noBalance}
                       />
@@ -110,7 +129,14 @@ export default function PortfolioPage() {
                         </p>
                       )}
                     </div>
-                    <ClaimButton marketAddress={pos.market.address} resolved={pos.market.resolved} />
+                    {portfolioAddress && (
+                      <ClaimButton
+                        marketAddress={pos.market.address}
+                        resolved={pos.market.resolved}
+                        userAddress={portfolioAddress}
+                        onClaimed={refetch}
+                      />
+                    )}
                   </div>
                 </div>
               </Link>

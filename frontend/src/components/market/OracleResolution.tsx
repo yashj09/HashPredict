@@ -6,16 +6,21 @@ import { formatUnits } from "viem";
 export function OracleResolution({
   marketAddress,
   resolved,
+  endTimestamp,
   onResolved,
 }: {
   marketAddress: `0x${string}`;
   resolved: boolean;
+  endTimestamp: bigint;
   onResolved?: () => void;
 }) {
   const { config, isLoading: configLoading } = useOracleConfig(marketAddress);
   const { resolve: resolveOracle, isLoading: resolving } = useResolveWithOracle(marketAddress);
 
   if (configLoading || !config) return null;
+
+  const now = Math.floor(Date.now() / 1000);
+  const marketEnded = now >= Number(endTimestamp);
 
   // Derive a human-readable target description
   const targetDisplay = formatOracleTarget(
@@ -40,6 +45,10 @@ export function OracleResolution({
 
       {resolved ? (
         <p className="text-xs text-zinc-500">Market already resolved.</p>
+      ) : !marketEnded ? (
+        <p className="text-xs text-zinc-500">
+          Oracle resolution available after market ends.
+        </p>
       ) : (
         <button
           onClick={async () => { await resolveOracle(); onResolved?.(); }}

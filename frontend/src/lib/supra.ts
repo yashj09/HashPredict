@@ -25,22 +25,21 @@ export function getPairLabel(pairId: number): string {
 
 /**
  * Fetch proof bytes from SUPRA's REST API for on-chain verification.
+ * Proxied through /api/supra-proof to avoid CORS issues in the browser.
  * The returned hex string is passed directly to SupraResolver.resolveWithPrice().
  */
 export async function fetchSupraProof(
   pairIndexes: number[]
 ): Promise<`0x${string}`> {
-  const resp = await fetch(`${SUPRA_TESTNET_API}/get_proof`, {
+  const resp = await fetch("/api/supra-proof", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      pair_indexes: pairIndexes,
-      chain_type: "evm",
-    }),
+    body: JSON.stringify({ pair_indexes: pairIndexes }),
   });
 
   if (!resp.ok) {
-    throw new Error(`SUPRA API error: ${resp.status} ${resp.statusText}`);
+    const errData = await resp.json().catch(() => ({ error: resp.statusText }));
+    throw new Error(errData.error || `SUPRA API error: ${resp.status}`);
   }
 
   const data = await resp.json();

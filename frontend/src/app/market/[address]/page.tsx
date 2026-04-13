@@ -9,7 +9,6 @@ import { ClaimPanel } from "@/components/market/ClaimPanel";
 import { PriceChart } from "@/components/market/PriceChart";
 import { TradeHistory } from "@/components/market/TradeHistory";
 import { OracleResolution } from "@/components/market/OracleResolution";
-import { OracleAdmin } from "@/components/market/OracleAdmin";
 
 export default function MarketPage() {
   const params = useParams();
@@ -64,11 +63,8 @@ export default function MarketPage() {
           <OracleResolution
             marketAddress={address}
             resolved={market.resolved}
+            endTimestamp={market.endTimestamp}
             onResolved={refetch}
-          />
-          <OracleAdmin
-            marketAddress={address}
-            onConfigured={refetch}
           />
         </div>
       </div>

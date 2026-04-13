@@ -2,6 +2,31 @@
 
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useReadContract } from "wagmi";
+import { formatUnits } from "viem";
+import { USDT_ADDRESS, ERC20_ABI } from "@/lib/contracts";
+
+function UsdtBalance() {
+  const { address } = useAccount();
+  const { data: balance } = useReadContract({
+    address: USDT_ADDRESS,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address, refetchInterval: 15_000 },
+  });
+
+  if (!address || balance === undefined) return null;
+
+  const formatted = parseFloat(formatUnits(balance as bigint, 6)).toFixed(2);
+
+  return (
+    <div className="px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-sm">
+      <span className="text-emerald-400 font-medium">{formatted}</span>
+      <span className="text-zinc-500 ml-1">USDT</span>
+    </div>
+  );
+}
 
 export function Header() {
   return (
@@ -18,12 +43,6 @@ export function Header() {
                 className="text-zinc-400 hover:text-white transition-colors text-sm"
               >
                 Markets
-              </Link>
-              <Link
-                href="/create"
-                className="text-zinc-400 hover:text-white transition-colors text-sm"
-              >
-                Create
               </Link>
               <Link
                 href="/portfolio"
@@ -45,7 +64,10 @@ export function Header() {
               </Link>
             </nav>
           </div>
-          <ConnectButton />
+          <div className="flex items-center gap-3">
+            <UsdtBalance />
+            <ConnectButton />
+          </div>
         </div>
       </div>
     </header>

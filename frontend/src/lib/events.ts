@@ -2,6 +2,24 @@ import { parseAbiItem } from "viem";
 import { publicClient } from "./publicClient";
 import { FACTORY_ADDRESS } from "./contracts";
 
+// ---------- Block Range Helper ----------
+// HashKey testnet has 26M+ blocks. Querying from "earliest" times out.
+// Markets were created recently, so 5M blocks (~2 weeks) is more than enough.
+
+const LOG_RANGE = 5_000_000n;
+
+let cachedFromBlock: bigint | null = null;
+let cacheTimestamp = 0;
+
+async function getSafeFromBlock(): Promise<bigint> {
+  const now = Date.now();
+  if (cachedFromBlock && now - cacheTimestamp < 60_000) return cachedFromBlock;
+  const current = await publicClient.getBlockNumber();
+  cachedFromBlock = current > LOG_RANGE ? current - LOG_RANGE : 0n;
+  cacheTimestamp = now;
+  return cachedFromBlock;
+}
+
 // ---------- Types ----------
 
 export interface TradeEvent {
@@ -64,169 +82,193 @@ export async function fetchMarketTradeEvents(
   marketAddress: `0x${string}`,
   userFilter?: `0x${string}`
 ): Promise<TradeEvent[]> {
-  const [buyLogs, sellLogs] = await Promise.all([
-    publicClient.getLogs({
-      address: marketAddress,
-      event: BuyEvent,
-      args: userFilter ? { user: userFilter } : undefined,
-      fromBlock: 0n,
-      toBlock: "latest",
-    }),
-    publicClient.getLogs({
-      address: marketAddress,
-      event: SellEvent,
-      args: userFilter ? { user: userFilter } : undefined,
-      fromBlock: 0n,
-      toBlock: "latest",
-    }),
-  ]);
+  try {
+    const fromBlock = await getSafeFromBlock();
+    const [buyLogs, sellLogs] = await Promise.all([
+      publicClient.getLogs({
+        address: marketAddress,
+        event: BuyEvent,
+        args: userFilter ? { user: userFilter } : undefined,
+        fromBlock,
+        toBlock: "latest",
+      }),
+      publicClient.getLogs({
+        address: marketAddress,
+        event: SellEvent,
+        args: userFilter ? { user: userFilter } : undefined,
+        fromBlock,
+        toBlock: "latest",
+      }),
+    ]);
 
-  const trades: TradeEvent[] = [
-    ...buyLogs.map((log) => ({
-      user: log.args.user!,
-      isYes: log.args.isYes!,
-      collateralAmount: log.args.collateralIn!,
-      tokenAmount: log.args.tokensOut!,
-      type: "buy" as const,
-      blockNumber: log.blockNumber,
-      txHash: log.transactionHash!,
-      logIndex: log.logIndex,
-      timestamp: 0,
-    })),
-    ...sellLogs.map((log) => ({
-      user: log.args.user!,
-      isYes: log.args.isYes!,
-      collateralAmount: log.args.collateralOut!,
-      tokenAmount: log.args.tokensIn!,
-      type: "sell" as const,
-      blockNumber: log.blockNumber,
-      txHash: log.transactionHash!,
-      logIndex: log.logIndex,
-      timestamp: 0,
-    })),
-  ];
+    const trades: TradeEvent[] = [
+      ...buyLogs.map((log) => ({
+        user: log.args.user!,
+        isYes: log.args.isYes!,
+        collateralAmount: log.args.collateralIn!,
+        tokenAmount: log.args.tokensOut!,
+        type: "buy" as const,
+        blockNumber: log.blockNumber,
+        txHash: log.transactionHash!,
+        logIndex: log.logIndex,
+        timestamp: 0,
+      })),
+      ...sellLogs.map((log) => ({
+        user: log.args.user!,
+        isYes: log.args.isYes!,
+        collateralAmount: log.args.collateralOut!,
+        tokenAmount: log.args.tokensIn!,
+        type: "sell" as const,
+        blockNumber: log.blockNumber,
+        txHash: log.transactionHash!,
+        logIndex: log.logIndex,
+        timestamp: 0,
+      })),
+    ];
 
-  return trades.sort((a, b) => {
-    if (a.blockNumber !== b.blockNumber)
-      return Number(a.blockNumber - b.blockNumber);
-    return a.logIndex - b.logIndex;
-  });
+    return trades.sort((a, b) => {
+      if (a.blockNumber !== b.blockNumber)
+        return Number(a.blockNumber - b.blockNumber);
+      return a.logIndex - b.logIndex;
+    });
+  } catch (err) {
+    console.error("fetchMarketTradeEvents failed:", err);
+    return [];
+  }
 }
 
 export async function fetchMarketClaimEvents(
   marketAddress: `0x${string}`
 ): Promise<ClaimEvent[]> {
-  const logs = await publicClient.getLogs({
-    address: marketAddress,
-    event: WingsClaimedEvent,
-    fromBlock: 0n,
-    toBlock: "latest",
-  });
+  try {
+    const fromBlock = await getSafeFromBlock();
+    const logs = await publicClient.getLogs({
+      address: marketAddress,
+      event: WingsClaimedEvent,
+      fromBlock,
+      toBlock: "latest",
+    });
 
-  return logs.map((log) => ({
-    user: log.args.user!,
-    amount: log.args.amount!,
-    blockNumber: log.blockNumber,
-    txHash: log.transactionHash!,
-    timestamp: 0,
-  }));
+    return logs.map((log) => ({
+      user: log.args.user!,
+      amount: log.args.amount!,
+      blockNumber: log.blockNumber,
+      txHash: log.transactionHash!,
+      timestamp: 0,
+    }));
+  } catch (err) {
+    console.error("fetchMarketClaimEvents failed:", err);
+    return [];
+  }
 }
 
 export async function fetchAllMarketEvents(
   marketAddress: `0x${string}`
 ): Promise<MarketEvent[]> {
-  const [buyLogs, sellLogs, addLiqLogs, removeLiqLogs] = await Promise.all([
-    publicClient.getLogs({
-      address: marketAddress,
-      event: BuyEvent,
-      fromBlock: 0n,
-      toBlock: "latest",
-    }),
-    publicClient.getLogs({
-      address: marketAddress,
-      event: SellEvent,
-      fromBlock: 0n,
-      toBlock: "latest",
-    }),
-    publicClient.getLogs({
-      address: marketAddress,
-      event: LiquidityAddedEvent,
-      fromBlock: 0n,
-      toBlock: "latest",
-    }),
-    publicClient.getLogs({
-      address: marketAddress,
-      event: LiquidityRemovedEvent,
-      fromBlock: 0n,
-      toBlock: "latest",
-    }),
-  ]);
+  try {
+    const fromBlock = await getSafeFromBlock();
+    const [buyLogs, sellLogs, addLiqLogs, removeLiqLogs] = await Promise.all([
+      publicClient.getLogs({
+        address: marketAddress,
+        event: BuyEvent,
+        fromBlock,
+        toBlock: "latest",
+      }),
+      publicClient.getLogs({
+        address: marketAddress,
+        event: SellEvent,
+        fromBlock,
+        toBlock: "latest",
+      }),
+      publicClient.getLogs({
+        address: marketAddress,
+        event: LiquidityAddedEvent,
+        fromBlock,
+        toBlock: "latest",
+      }),
+      publicClient.getLogs({
+        address: marketAddress,
+        event: LiquidityRemovedEvent,
+        fromBlock,
+        toBlock: "latest",
+      }),
+    ]);
 
-  const events: MarketEvent[] = [
-    ...buyLogs.map((log) => ({
-      kind: "trade" as const,
-      user: log.args.user!,
-      isYes: log.args.isYes!,
-      collateralAmount: log.args.collateralIn!,
-      tokenAmount: log.args.tokensOut!,
-      type: "buy" as const,
-      blockNumber: log.blockNumber,
-      txHash: log.transactionHash!,
-      logIndex: log.logIndex,
-      timestamp: 0,
-    })),
-    ...sellLogs.map((log) => ({
-      kind: "trade" as const,
-      user: log.args.user!,
-      isYes: log.args.isYes!,
-      collateralAmount: log.args.collateralOut!,
-      tokenAmount: log.args.tokensIn!,
-      type: "sell" as const,
-      blockNumber: log.blockNumber,
-      txHash: log.transactionHash!,
-      logIndex: log.logIndex,
-      timestamp: 0,
-    })),
-    ...addLiqLogs.map((log) => ({
-      kind: "liquidity" as const,
-      provider: log.args.provider!,
-      type: "add" as const,
-      collateralAmount: log.args.collateralAmount!,
-      shareAmount: log.args.lpSharesMinted!,
-      blockNumber: log.blockNumber,
-      logIndex: log.logIndex,
-    })),
-    ...removeLiqLogs.map((log) => ({
-      kind: "liquidity" as const,
-      provider: log.args.provider!,
-      type: "remove" as const,
-      collateralAmount: log.args.collateralOut!,
-      shareAmount: log.args.lpSharesBurned!,
-      blockNumber: log.blockNumber,
-      logIndex: log.logIndex,
-    })),
-  ];
+    const events: MarketEvent[] = [
+      ...buyLogs.map((log) => ({
+        kind: "trade" as const,
+        user: log.args.user!,
+        isYes: log.args.isYes!,
+        collateralAmount: log.args.collateralIn!,
+        tokenAmount: log.args.tokensOut!,
+        type: "buy" as const,
+        blockNumber: log.blockNumber,
+        txHash: log.transactionHash!,
+        logIndex: log.logIndex,
+        timestamp: 0,
+      })),
+      ...sellLogs.map((log) => ({
+        kind: "trade" as const,
+        user: log.args.user!,
+        isYes: log.args.isYes!,
+        collateralAmount: log.args.collateralOut!,
+        tokenAmount: log.args.tokensIn!,
+        type: "sell" as const,
+        blockNumber: log.blockNumber,
+        txHash: log.transactionHash!,
+        logIndex: log.logIndex,
+        timestamp: 0,
+      })),
+      ...addLiqLogs.map((log) => ({
+        kind: "liquidity" as const,
+        provider: log.args.provider!,
+        type: "add" as const,
+        collateralAmount: log.args.collateralAmount!,
+        shareAmount: log.args.lpSharesMinted!,
+        blockNumber: log.blockNumber,
+        logIndex: log.logIndex,
+      })),
+      ...removeLiqLogs.map((log) => ({
+        kind: "liquidity" as const,
+        provider: log.args.provider!,
+        type: "remove" as const,
+        collateralAmount: log.args.collateralOut!,
+        shareAmount: log.args.lpSharesBurned!,
+        blockNumber: log.blockNumber,
+        logIndex: log.logIndex,
+      })),
+    ];
 
-  return events.sort((a, b) => {
-    if (a.blockNumber !== b.blockNumber)
-      return Number(a.blockNumber - b.blockNumber);
-    return a.logIndex - b.logIndex;
-  });
+    return events.sort((a, b) => {
+      if (a.blockNumber !== b.blockNumber)
+        return Number(a.blockNumber - b.blockNumber);
+      return a.logIndex - b.logIndex;
+    });
+  } catch (err) {
+    console.error("fetchAllMarketEvents failed:", err);
+    return [];
+  }
 }
 
 export async function fetchInitialLiquidity(
   marketAddress: `0x${string}`
 ): Promise<bigint> {
-  const logs = await publicClient.getLogs({
-    address: FACTORY_ADDRESS,
-    event: MarketCreatedEvent,
-    args: { market: marketAddress },
-    fromBlock: 0n,
-    toBlock: "latest",
-  });
+  try {
+    const fromBlock = await getSafeFromBlock();
+    const logs = await publicClient.getLogs({
+      address: FACTORY_ADDRESS,
+      event: MarketCreatedEvent,
+      args: { market: marketAddress },
+      fromBlock,
+      toBlock: "latest",
+    });
 
-  if (logs.length === 0) throw new Error("MarketCreated event not found");
-  return logs[0].args.initialLiquidity!;
+    if (logs.length === 0) throw new Error("MarketCreated event not found");
+    return logs[0].args.initialLiquidity!;
+  } catch (err) {
+    console.error("fetchInitialLiquidity failed:", err);
+    throw err;
+  }
 }
 
 // ---------- Timestamp Enrichment ----------
@@ -239,16 +281,20 @@ export async function enrichWithTimestamps(
   );
   const timestamps = new Map<bigint, number>();
 
-  // Batch in groups of 10 to avoid overloading RPC
-  const batchSize = 10;
-  for (let i = 0; i < unique.length; i += batchSize) {
-    const batch = unique.slice(i, i + batchSize);
-    const blocks = await Promise.all(
-      batch.map((bn) => publicClient.getBlock({ blockNumber: bn }))
-    );
-    blocks.forEach((block, idx) => {
-      timestamps.set(batch[idx], Number(block.timestamp));
-    });
+  try {
+    // Batch in groups of 10 to avoid overloading RPC
+    const batchSize = 10;
+    for (let i = 0; i < unique.length; i += batchSize) {
+      const batch = unique.slice(i, i + batchSize);
+      const blocks = await Promise.all(
+        batch.map((bn) => publicClient.getBlock({ blockNumber: bn }))
+      );
+      blocks.forEach((block, idx) => {
+        timestamps.set(batch[idx], Number(block.timestamp));
+      });
+    }
+  } catch (err) {
+    console.error("enrichWithTimestamps failed:", err);
   }
 
   return timestamps;

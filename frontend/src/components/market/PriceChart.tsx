@@ -33,13 +33,17 @@ export function PriceChart({
 }: {
   marketAddress: `0x${string}`;
 }) {
-  const { data: priceHistory, isLoading } = usePriceHistory(marketAddress);
+  const { data: priceHistory, isLoading, isError } = usePriceHistory(marketAddress);
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
       <h3 className="text-lg font-semibold text-white mb-4">Price History</h3>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="h-[300px] flex items-center justify-center">
+          <p className="text-zinc-500 text-sm">Failed to load price history.</p>
+        </div>
+      ) : isLoading ? (
         <div className="h-[300px] bg-zinc-800 rounded-lg animate-pulse" />
       ) : !priceHistory || priceHistory.length <= 1 ? (
         <div className="h-[300px] flex items-center justify-center">

@@ -31,6 +31,7 @@ export function useLeaderboard() {
     queryKey: ["leaderboard", addresses?.length],
     enabled: !!addresses && addresses.length > 0,
     staleTime: 60_000,
+    retry: 1,
     queryFn: async () => {
       if (!addresses) return [];
 

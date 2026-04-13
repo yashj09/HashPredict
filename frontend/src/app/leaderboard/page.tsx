@@ -7,7 +7,7 @@ import { formatUSDT, shortenAddress, cn } from "@/lib/utils";
 type RankBy = "volume" | "pnl";
 
 export default function LeaderboardPage() {
-  const { data: entries, isLoading } = useLeaderboard();
+  const { data: entries, isLoading, isError } = useLeaderboard();
   const [rankBy, setRankBy] = useState<RankBy>("volume");
 
   const sorted = [...(entries ?? [])].sort((a, b) => {
@@ -45,7 +45,11 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <div className="text-center py-12">
+          <p className="text-zinc-400">Failed to load leaderboard data.</p>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           {[...Array(8)].map((_, i) => (
             <div

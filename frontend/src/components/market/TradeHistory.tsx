@@ -9,13 +9,17 @@ export function TradeHistory({
 }: {
   marketAddress: `0x${string}`;
 }) {
-  const { data: trades, isLoading } = useMarketTradeHistory(marketAddress);
+  const { data: trades, isLoading, isError } = useMarketTradeHistory(marketAddress);
 
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
       <h3 className="text-lg font-semibold text-white mb-4">Trade History</h3>
 
-      {isLoading ? (
+      {isError ? (
+        <p className="text-zinc-500 text-sm text-center py-6">
+          Failed to load trade history.
+        </p>
+      ) : isLoading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
             <div

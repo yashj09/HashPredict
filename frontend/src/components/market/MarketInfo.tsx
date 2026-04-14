@@ -1,7 +1,7 @@
 "use client";
 
 import type { MarketData } from "@/hooks/useMarkets";
-import { formatUSDT, timeRemaining, shortenAddress, cn } from "@/lib/utils";
+import { formatUSDT, timeRemaining, shortenAddress, cn, explorerAddressUrl } from "@/lib/utils";
 
 export function MarketInfo({ market }: { market: MarketData }) {
   const totalReserve = market.yesReserve + market.noReserve;
@@ -69,11 +69,22 @@ export function MarketInfo({ market }: { market: MarketData }) {
               year: "numeric",
             }),
           },
-          { label: "Contract", value: shortenAddress(market.address) },
+          { label: "Contract", value: shortenAddress(market.address), href: explorerAddressUrl(market.address) },
         ].map((stat) => (
           <div key={stat.label} className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
             <p className="text-xs text-zinc-500 mb-0.5">{stat.label}</p>
-            <p className="text-sm font-semibold text-zinc-200">{stat.value}</p>
+            {"href" in stat && stat.href ? (
+              <a
+                href={stat.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+              >
+                {stat.value}
+              </a>
+            ) : (
+              <p className="text-sm font-semibold text-zinc-200">{stat.value}</p>
+            )}
           </div>
         ))}
       </div>

@@ -38,3 +38,13 @@ export function timeRemaining(endTimestamp: number): string {
 export function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
+
+const EXPLORER_BASE = "https://testnet-explorer.hsk.xyz";
+
+export function explorerTxUrl(txHash: string): string {
+  return `${EXPLORER_BASE}/tx/${txHash}`;
+}
+
+export function explorerAddressUrl(address: string): string {
+  return `${EXPLORER_BASE}/address/${address}`;
+}

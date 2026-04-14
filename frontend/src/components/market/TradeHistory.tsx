@@ -1,7 +1,7 @@
 "use client";
 
 import { useMarketTradeHistory } from "@/hooks/useMarketHistory";
-import { formatUSDT, shortenAddress, cn } from "@/lib/utils";
+import { formatUSDT, shortenAddress, cn, explorerTxUrl, explorerAddressUrl } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 export function TradeHistory({
@@ -41,7 +41,8 @@ export function TradeHistory({
                 <th className="text-left py-2 pr-2 font-medium">User</th>
                 <th className="text-left py-2 pr-2 font-medium">Type</th>
                 <th className="text-left py-2 pr-2 font-medium">Side</th>
-                <th className="text-right py-2 font-medium">Amount</th>
+                <th className="text-right py-2 pr-2 font-medium">Amount</th>
+                <th className="text-right py-2 font-medium">Tx</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
@@ -55,7 +56,15 @@ export function TradeHistory({
                       : "—"}
                   </td>
                   <td className="py-2 pr-2 font-mono text-xs">
-                    {shortenAddress(trade.user)}
+                    <a
+                      href={explorerAddressUrl(trade.user)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="hover:text-indigo-400 transition-colors"
+                    >
+                      {shortenAddress(trade.user)}
+                    </a>
                   </td>
                   <td className="py-2 pr-2">
                     <span
@@ -81,8 +90,19 @@ export function TradeHistory({
                       {trade.side}
                     </span>
                   </td>
-                  <td className="py-2 text-right font-mono text-xs">
+                  <td className="py-2 pr-2 text-right font-mono text-xs">
                     ${formatUSDT(trade.collateralAmount)}
+                  </td>
+                  <td className="py-2 text-right">
+                    <a
+                      href={explorerTxUrl(trade.txHash)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-zinc-600 hover:text-indigo-400 transition-colors"
+                    >
+                      {trade.txHash.slice(0, 6)}...
+                    </a>
                   </td>
                 </tr>
               ))}

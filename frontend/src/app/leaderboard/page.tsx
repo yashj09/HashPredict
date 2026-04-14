@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
-import { formatUSDT, shortenAddress, cn } from "@/lib/utils";
+import { formatUSDT, shortenAddress, cn, explorerAddressUrl } from "@/lib/utils";
 
 type RankBy = "volume" | "pnl";
 
@@ -96,7 +96,14 @@ export default function LeaderboardPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 font-mono text-xs">
-                      {shortenAddress(entry.address)}
+                      <a
+                        href={explorerAddressUrl(entry.address)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-indigo-400 transition-colors"
+                      >
+                        {shortenAddress(entry.address)}
+                      </a>
                     </td>
                     <td className="py-3 px-4 text-right font-mono text-xs">
                       ${formatUSDT(entry.totalVolume)}

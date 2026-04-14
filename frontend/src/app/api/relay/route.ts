@@ -110,6 +110,13 @@ export async function POST(request: Request) {
 
     const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
 
+    if (receipt.status === "reverted") {
+      return Response.json(
+        { error: "Transaction reverted on-chain", txHash },
+        { status: 400 },
+      );
+    }
+
     return Response.json({
       txHash,
       status: receipt.status,

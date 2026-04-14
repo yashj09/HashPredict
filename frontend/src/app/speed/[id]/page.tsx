@@ -67,10 +67,16 @@ export default function SpeedMarketDetailPage() {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Info + Chart + Trade history */}
+        {/* Left: Chart (hero) + Probability + Trade history */}
         <div className="lg:col-span-2 space-y-6">
+          <SpeedPriceChart
+            asset={market.asset}
+            strikePrice={market.strikePrice}
+            expiry={market.expiry}
+            resolved={market.resolved}
+            outcomeIsUp={market.outcomeIsUp}
+          />
           <SpeedMarketInfo market={market} />
-          <SpeedPriceChart asset={market.asset} strikePrice={market.strikePrice} />
           <SpeedTradeHistory marketId={marketId} />
         </div>
 

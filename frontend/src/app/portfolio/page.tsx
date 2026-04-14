@@ -257,7 +257,10 @@ export default function PortfolioPage() {
                         </p>
                       )}
                     </div>
-                    {portfolioAddress && (
+                    {portfolioAddress && pos.market.resolved && (
+                      (pos.market.outcomeYes && pos.yesBalance > 0n) ||
+                      (!pos.market.outcomeYes && pos.noBalance > 0n)
+                    ) && (
                       <ClaimButton
                         marketAddress={pos.market.address}
                         resolved={pos.market.resolved}

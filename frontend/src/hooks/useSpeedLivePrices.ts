@@ -14,14 +14,15 @@ export interface PriceSnapshot {
 }
 
 /**
- * Accumulates live Pyth price snapshots every `interval` ms for a given asset.
- * Returns an array of { time, price } points for charting.
+ * Streams live Pyth prices via SSE (Server-Sent Events) for real-time chart data.
+ * Falls back to HTTP polling if SSE fails.
  */
-export function useSpeedLivePrices(asset: string, interval = 5000) {
+export function useSpeedLivePrices(asset: string) {
   const [snapshots, setSnapshots] = useState<PriceSnapshot[]>([]);
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const feedId = PYTH_FEED_IDS[asset.toUpperCase()];
   const snapshotsRef = useRef<PriceSnapshot[]>([]);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     if (!feedId) return;
@@ -32,39 +33,79 @@ export function useSpeedLivePrices(asset: string, interval = 5000) {
     setCurrentPrice(null);
 
     let cancelled = false;
+    let fallbackTimer: ReturnType<typeof setInterval> | null = null;
 
-    async function fetchPrice() {
-      try {
-        const res = await fetch(
-          `https://hermes.pyth.network/v2/updates/price/latest?ids[]=${feedId}`,
-        );
-        if (!res.ok || cancelled) return;
-        const json = await res.json();
-        const parsed = json.parsed?.[0]?.price;
-        if (!parsed) return;
+    function addPoint(price: number) {
+      if (cancelled) return;
+      const time = Math.floor(Date.now() / 1000);
+      // Deduplicate — skip if same second as last point
+      const last = snapshotsRef.current[snapshotsRef.current.length - 1];
+      if (last && last.time === time) return;
 
-        const price = Number(parsed.price) * Math.pow(10, Number(parsed.expo));
-        const time = Math.floor(Date.now() / 1000);
-
-        if (!cancelled) {
-          setCurrentPrice(price);
-          const point = { time, price };
-          snapshotsRef.current = [...snapshotsRef.current, point];
-          setSnapshots([...snapshotsRef.current]);
-        }
-      } catch {
-        // Retry on next interval
-      }
+      setCurrentPrice(price);
+      const point = { time, price };
+      snapshotsRef.current = [...snapshotsRef.current, point];
+      setSnapshots([...snapshotsRef.current]);
     }
 
-    fetchPrice();
-    const timer = setInterval(fetchPrice, interval);
+    // Try SSE streaming first
+    function startSSE() {
+      const url = `https://hermes.pyth.network/v2/updates/price/stream?ids[]=${feedId}&parsed=true&allow_unordered=true&benchmarks_only=false`;
+      const es = new EventSource(url);
+      eventSourceRef.current = es;
+
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const parsed = data.parsed?.[0]?.price;
+          if (!parsed) return;
+          const price = Number(parsed.price) * Math.pow(10, Number(parsed.expo));
+          addPoint(price);
+        } catch {
+          // ignore parse errors
+        }
+      };
+
+      es.onerror = () => {
+        // SSE failed — close and fall back to polling
+        es.close();
+        eventSourceRef.current = null;
+        if (!cancelled) startPolling();
+      };
+    }
+
+    // Fallback: HTTP polling every 2s
+    function startPolling() {
+      async function fetchPrice() {
+        try {
+          const res = await fetch(
+            `https://hermes.pyth.network/v2/updates/price/latest?ids[]=${feedId}`,
+          );
+          if (!res.ok || cancelled) return;
+          const json = await res.json();
+          const parsed = json.parsed?.[0]?.price;
+          if (!parsed) return;
+          const price = Number(parsed.price) * Math.pow(10, Number(parsed.expo));
+          addPoint(price);
+        } catch {
+          // retry on next interval
+        }
+      }
+      fetchPrice();
+      fallbackTimer = setInterval(fetchPrice, 2000);
+    }
+
+    startSSE();
 
     return () => {
       cancelled = true;
-      clearInterval(timer);
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      if (fallbackTimer) clearInterval(fallbackTimer);
     };
-  }, [feedId, interval]);
+  }, [feedId]);
 
   return { snapshots, currentPrice };
 }

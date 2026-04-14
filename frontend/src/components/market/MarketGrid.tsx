@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useMarkets } from "@/hooks/useMarkets";
+import { useMarkets, type MarketData } from "@/hooks/useMarkets";
+import { useSpeedMarkets, type SpeedMarketData } from "@/hooks/useSpeedMarkets";
 import { MarketCard } from "./MarketCard";
+import { SpeedMarketCard } from "@/components/speed/SpeedMarketCard";
 import { cn } from "@/lib/utils";
 
-const filters = ["All", "Crypto", "RWA", "Active", "Resolved"] as const;
+const filters = ["All", "Speed", "Crypto", "RWA"] as const;
 type Filter = (typeof filters)[number];
 
 const sorts = ["newest", "endingSoon", "volume", "liquidity"] as const;
@@ -20,43 +22,69 @@ const sortLabels: Record<Sort, string> = {
 
 export function MarketGrid() {
   const { markets, isLoading, error } = useMarkets();
+  const { activeMarkets: speedActive, resolvedMarkets: speedResolved, isLoading: speedLoading } = useSpeedMarkets();
   const [activeFilter, setActiveFilter] = useState<Filter>("All");
   const [sortBy, setSortBy] = useState<Sort>("newest");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filtered = useMemo(() => {
-    return markets
+  // Split speed markets into active vs expired
+  const now = Math.floor(Date.now() / 1000);
+  const filteredSpeedActive = useMemo(() => {
+    if (activeFilter !== "All" && activeFilter !== "Speed") return [];
+    let list = speedActive;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((m) => m.asset.toLowerCase().includes(q) || "speed".includes(q));
+    }
+    return list;
+  }, [speedActive, activeFilter, searchQuery]);
+
+  const filteredSpeedResolved = useMemo(() => {
+    if (activeFilter !== "All" && activeFilter !== "Speed") return [];
+    let list = speedResolved;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((m) => m.asset.toLowerCase().includes(q) || "speed".includes(q));
+    }
+    return list;
+  }, [speedResolved, activeFilter, searchQuery]);
+
+  // Split regular markets into active vs ended/resolved
+  const { activeRegular, endedRegular } = useMemo(() => {
+    if (activeFilter === "Speed") return { activeRegular: [] as MarketData[], endedRegular: [] as MarketData[] };
+
+    const base = markets
       .filter((m) => {
         switch (activeFilter) {
-          case "Crypto":
-            return m.category === "Crypto";
-          case "RWA":
-            return m.category === "RWA";
-          case "Active":
-            return !m.resolved && Number(m.endTimestamp) * 1000 > Date.now();
-          case "Resolved":
-            return m.resolved;
-          default:
-            return true;
+          case "Crypto": return m.category === "Crypto";
+          case "RWA": return m.category === "RWA";
+          default: return true;
         }
       })
       .filter(
         (m) =>
           searchQuery === "" ||
-          m.question.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-      .sort((a, b) => {
-        switch (sortBy) {
-          case "newest":
-            return Number(b.endTimestamp - a.endTimestamp);
-          case "endingSoon":
-            return Number(a.endTimestamp - b.endTimestamp);
-          case "volume":
-            return Number(b.totalVolume - a.totalVolume);
-          case "liquidity":
-            return Number(b.totalCollateral - a.totalCollateral);
-        }
-      });
+          m.question.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+
+    const sortFn = (a: MarketData, b: MarketData) => {
+      switch (sortBy) {
+        case "newest": return Number(b.endTimestamp - a.endTimestamp);
+        case "endingSoon": return Number(a.endTimestamp - b.endTimestamp);
+        case "volume": return Number(b.totalVolume - a.totalVolume);
+        case "liquidity": return Number(b.totalCollateral - a.totalCollateral);
+      }
+    };
+
+    const active = base
+      .filter((m) => !m.resolved && Number(m.endTimestamp) * 1000 > Date.now())
+      .sort(sortFn);
+
+    const ended = base
+      .filter((m) => m.resolved || Number(m.endTimestamp) * 1000 <= Date.now())
+      .sort(sortFn);
+
+    return { activeRegular: active, endedRegular: ended };
   }, [markets, activeFilter, searchQuery, sortBy]);
 
   if (error) {
@@ -66,6 +94,11 @@ export function MarketGrid() {
       </div>
     );
   }
+
+  const allLoading = isLoading || speedLoading;
+  const hasActiveContent = filteredSpeedActive.length > 0 || activeRegular.length > 0;
+  const hasEndedContent = filteredSpeedResolved.length > 0 || endedRegular.length > 0;
+  const totalResults = filteredSpeedActive.length + filteredSpeedResolved.length + activeRegular.length + endedRegular.length;
 
   return (
     <div>
@@ -99,8 +132,10 @@ export function MarketGrid() {
               className={cn(
                 "px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
                 activeFilter === f
-                  ? "bg-indigo-600 text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
+                  ? f === "Speed"
+                    ? "bg-amber-600 text-white"
+                    : "bg-indigo-600 text-white"
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200",
               )}
             >
               {f}
@@ -116,7 +151,7 @@ export function MarketGrid() {
                 "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap",
                 sortBy === s
                   ? "bg-zinc-700 text-zinc-100"
-                  : "bg-zinc-800/50 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+                  : "bg-zinc-800/50 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300",
               )}
             >
               {sortLabels[s]}
@@ -125,22 +160,58 @@ export function MarketGrid() {
         </div>
       </div>
 
-      {/* Grid */}
-      {isLoading ? (
+      {/* Content */}
+      {allLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 h-48 animate-pulse" />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : totalResults === 0 ? (
         <div className="text-center py-12">
           <p className="text-zinc-500">No markets found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((market) => (
-            <MarketCard key={market.address} market={market} />
-          ))}
+        <div className="space-y-8">
+          {/* Active Markets Section */}
+          {hasActiveContent && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-lg font-semibold text-white">Active Markets</h2>
+                <span className="text-sm text-zinc-500">
+                  ({filteredSpeedActive.length + activeRegular.length})
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredSpeedActive.map((market) => (
+                  <SpeedMarketCard key={`speed-${market.marketId}`} market={market} />
+                ))}
+                {activeRegular.map((market) => (
+                  <MarketCard key={market.address} market={market} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Ended / Resolved Markets Section */}
+          {hasEndedContent && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-lg font-semibold text-zinc-400">Ended & Resolved</h2>
+                <span className="text-sm text-zinc-600">
+                  ({filteredSpeedResolved.length + endedRegular.length})
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredSpeedResolved.map((market) => (
+                  <SpeedMarketCard key={`speed-resolved-${market.marketId}`} market={market} />
+                ))}
+                {endedRegular.map((market) => (
+                  <MarketCard key={market.address} market={market} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

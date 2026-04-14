@@ -45,6 +45,12 @@ export function Header() {
                 Markets
               </Link>
               <Link
+                href="/speed"
+                className="text-amber-400 hover:text-amber-300 transition-colors text-sm font-medium"
+              >
+                Speed
+              </Link>
+              <Link
                 href="/portfolio"
                 className="text-zinc-400 hover:text-white transition-colors text-sm"
               >

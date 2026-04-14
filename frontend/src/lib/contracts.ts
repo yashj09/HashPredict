@@ -5,6 +5,7 @@ import usdtAbi from "./usdt_abi.json";
 import erc20Abi from "./erc20_abi.json";
 import supraResolverAbi from "./supra_resolver_abi.json";
 import forwarderAbi from "./forwarder_abi.json";
+import speedMarketAbi from "./speed_market_abi.json";
 
 // Deploy addresses — update these after deployment
 export const FACTORY_ADDRESS =
@@ -29,3 +30,9 @@ export const USDT_ABI = usdtAbi as unknown as Abi;
 export const ERC20_ABI = erc20Abi as unknown as Abi;
 export const SUPRA_RESOLVER_ABI = supraResolverAbi as unknown as Abi;
 export const FORWARDER_ABI = forwarderAbi as unknown as Abi;
+
+export const SPEED_MARKET_ADDRESS =
+  (process.env.NEXT_PUBLIC_SPEED_MARKET_ADDRESS as `0x${string}`) ||
+  ("0x0000000000000000000000000000000000000000" as `0x${string}`);
+
+export const SPEED_MARKET_ABI = speedMarketAbi as unknown as Abi;

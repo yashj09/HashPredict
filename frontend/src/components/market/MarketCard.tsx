@@ -8,6 +8,9 @@ const categoryColors: Record<string, string> = {
   Crypto: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   RWA: "bg-amber-500/10 text-amber-400 border-amber-500/20",
   Ecosystem: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  Macro: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+  Sports: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  Commodities: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
 };
 
 export function MarketCard({ market }: { market: MarketData }) {

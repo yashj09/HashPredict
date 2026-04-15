@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   title: "HashPredict - Prediction Markets on HashKey Chain",
   description:
     "Trade on the outcome of real-world events. The first prediction market on HashKey Chain.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

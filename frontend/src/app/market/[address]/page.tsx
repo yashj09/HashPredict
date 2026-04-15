@@ -2,18 +2,33 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMarket } from "@/hooks/useMarket";
+import { useMarketTradeHistory } from "@/hooks/useMarketHistory";
 import { MarketInfo } from "@/components/market/MarketInfo";
 import { TradingPanel } from "@/components/market/TradingPanel";
 import { ClaimPanel } from "@/components/market/ClaimPanel";
 import { PriceChart } from "@/components/market/PriceChart";
 import { TradeHistory } from "@/components/market/TradeHistory";
+import { LiveActivityFeed, type ActivityItem } from "@/components/market/LiveActivityFeed";
 import { OracleResolution } from "@/components/market/OracleResolution";
 
 export default function MarketPage() {
   const params = useParams();
   const address = params.address as `0x${string}`;
+  const queryClient = useQueryClient();
   const { market, isLoading, refetch } = useMarket(address);
+  const { data: trades, isLoading: tradesLoading } = useMarketTradeHistory(address);
+
+  const activityItems: ActivityItem[] = (trades ?? []).map((t, i) => ({
+    id: `${t.txHash}-${i}`,
+    user: t.user,
+    type: t.type,
+    side: t.side,
+    amount: t.collateralAmount,
+    txHash: t.txHash,
+    timestamp: t.timestamp,
+  }));
 
   if (isLoading) {
     return (
@@ -53,13 +68,21 @@ export default function MarketPage() {
           <TradeHistory marketAddress={address} />
         </div>
 
-        {/* Right: Trading panel + Oracle */}
+        {/* Right: Trading panel + Live Activity + Oracle */}
         <div className="space-y-4">
           {market.resolved ? (
             <ClaimPanel market={market} />
           ) : (
-            <TradingPanel market={market} onTradeComplete={refetch} />
+            <TradingPanel market={market} onTradeComplete={() => {
+              refetch();
+              queryClient.invalidateQueries({ queryKey: ["marketTrades", address] });
+            }} />
           )}
+          <LiveActivityFeed
+            items={activityItems}
+            isLoading={tradesLoading}
+            positiveSides={["YES"]}
+          />
           <OracleResolution
             marketAddress={address}
             resolved={market.resolved}

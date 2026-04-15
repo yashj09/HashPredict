@@ -6,10 +6,12 @@ import { useReadContract } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { SPEED_MARKET_ADDRESS, SPEED_MARKET_ABI } from "@/lib/contracts";
 import type { SpeedMarketData } from "@/hooks/useSpeedMarkets";
+import { useSpeedTradeHistory } from "@/hooks/useSpeedTradeHistory";
 import { SpeedMarketInfo } from "@/components/speed/SpeedMarketInfo";
 import { SpeedPriceChart } from "@/components/speed/SpeedPriceChart";
 import { SpeedTradeHistory } from "@/components/speed/SpeedTradeHistory";
 import { SpeedTradingPanel } from "@/components/speed/SpeedTradingPanel";
+import { LiveActivityFeed, type ActivityItem } from "@/components/market/LiveActivityFeed";
 
 export default function SpeedMarketDetailPage() {
   const params = useParams();
@@ -23,6 +25,18 @@ export default function SpeedMarketDetailPage() {
     args: [marketId],
     query: { refetchInterval: 10_000 },
   });
+
+  const { data: trades, isLoading: tradesLoading } = useSpeedTradeHistory(marketId);
+
+  const activityItems: ActivityItem[] = (trades ?? []).map((t, i) => ({
+    id: `${t.txHash}-${i}`,
+    user: t.user,
+    type: t.type,
+    side: t.side,
+    amount: t.collateralAmount,
+    txHash: t.txHash,
+    timestamp: t.timestamp,
+  }));
 
   if (isLoading) {
     return (
@@ -82,12 +96,17 @@ export default function SpeedMarketDetailPage() {
           <SpeedTradeHistory marketId={marketId} />
         </div>
 
-        {/* Right: Trading panel */}
+        {/* Right: Trading panel + Live Activity */}
         <div className="space-y-4">
           <SpeedTradingPanel market={market} onTradeComplete={() => {
             refetch();
             queryClient.invalidateQueries({ queryKey: ["speedTradeHistory", marketId.toString()] });
           }} />
+          <LiveActivityFeed
+            items={activityItems}
+            isLoading={tradesLoading}
+            positiveSides={["UP"]}
+          />
         </div>
       </div>
     </div>

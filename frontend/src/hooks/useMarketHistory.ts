@@ -20,7 +20,8 @@ export interface TradeRecord {
 export function useMarketTradeHistory(marketAddress: `0x${string}`) {
   return useQuery<TradeRecord[]>({
     queryKey: ["marketTrades", marketAddress],
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchInterval: 10_000,
     retry: 1,
     queryFn: async () => {
       const events = await fetchMarketTradeEvents(marketAddress);

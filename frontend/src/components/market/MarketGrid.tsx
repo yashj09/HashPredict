@@ -7,7 +7,7 @@ import { MarketCard } from "./MarketCard";
 import { SpeedMarketCard } from "@/components/speed/SpeedMarketCard";
 import { cn } from "@/lib/utils";
 
-const filters = ["All", "Speed", "Crypto", "RWA"] as const;
+const filters = ["All", "Speed", "Crypto", "Macro", "Sports"] as const;
 type Filter = (typeof filters)[number];
 
 const sorts = ["newest", "endingSoon", "volume", "liquidity"] as const;
@@ -63,7 +63,8 @@ export function MarketGrid() {
       .filter((m) => {
         switch (activeFilter) {
           case "Crypto": return m.category === "Crypto";
-          case "RWA": return m.category === "RWA";
+          case "Macro": return m.category === "Macro" || m.category === "Commodities";
+          case "Sports": return m.category === "Sports";
           default: return true;
         }
       })

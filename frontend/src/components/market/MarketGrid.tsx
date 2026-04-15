@@ -20,15 +20,21 @@ const sortLabels: Record<Sort, string> = {
   liquidity: "Top Liquidity",
 };
 
+type ViewMode = "grid" | "list";
+
+const ENDED_INITIAL_SHOW = 3;
+
 export function MarketGrid() {
   const { markets, isLoading, error } = useMarkets();
   const { activeMarkets: speedActive, resolvedMarkets: speedResolved, isLoading: speedLoading } = useSpeedMarkets();
   const [activeFilter, setActiveFilter] = useState<Filter>("All");
   const [sortBy, setSortBy] = useState<Sort>("newest");
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeView, setActiveView] = useState<ViewMode>("grid");
+  const [endedView, setEndedView] = useState<ViewMode>("grid");
+  const [showAllEnded, setShowAllEnded] = useState(false);
 
   // Split speed markets into active vs expired
-  const now = Math.floor(Date.now() / 1000);
   const filteredSpeedActive = useMemo(() => {
     if (activeFilter !== "All" && activeFilter !== "Speed") return [];
     let list = speedActive;
@@ -97,7 +103,20 @@ export function MarketGrid() {
 
   const allLoading = isLoading || speedLoading;
   const hasActiveContent = filteredSpeedActive.length > 0 || activeRegular.length > 0;
-  const hasEndedContent = filteredSpeedResolved.length > 0 || endedRegular.length > 0;
+
+  // Ended markets: combine speed resolved + regular ended
+  const allEndedSpeed = filteredSpeedResolved;
+  const allEndedRegular = endedRegular;
+  const totalEnded = allEndedSpeed.length + allEndedRegular.length;
+  const hasEndedContent = totalEnded > 0;
+
+  // Limit ended to ENDED_INITIAL_SHOW unless expanded
+  const visibleEndedSpeed = showAllEnded ? allEndedSpeed : allEndedSpeed.slice(0, ENDED_INITIAL_SHOW);
+  const remainingSlots = Math.max(0, ENDED_INITIAL_SHOW - visibleEndedSpeed.length);
+  const visibleEndedRegular = showAllEnded ? allEndedRegular : allEndedRegular.slice(0, remainingSlots);
+  const visibleEndedTotal = visibleEndedSpeed.length + visibleEndedRegular.length;
+  const hasMoreEnded = totalEnded > ENDED_INITIAL_SHOW && !showAllEnded;
+
   const totalResults = filteredSpeedActive.length + filteredSpeedResolved.length + activeRegular.length + endedRegular.length;
 
   return (
@@ -172,48 +191,134 @@ export function MarketGrid() {
           <p className="text-slate-500">No markets found.</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {/* Active Markets Section */}
+        <div className="space-y-10">
+          {/* ── Active Markets Section ── */}
           {hasActiveContent && (
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-lg font-semibold text-white">Active Markets</h2>
-                <span className="text-sm text-slate-500">
-                  ({filteredSpeedActive.length + activeRegular.length})
-                </span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-white">Active Markets</h2>
+                  <span className="text-sm text-slate-500">
+                    ({filteredSpeedActive.length + activeRegular.length})
+                  </span>
+                </div>
+                <ViewToggle view={activeView} onChange={setActiveView} />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSpeedActive.map((market) => (
-                  <SpeedMarketCard key={`speed-${market.marketId}`} market={market} />
-                ))}
-                {activeRegular.map((market) => (
-                  <MarketCard key={market.address} market={market} />
-                ))}
-              </div>
+
+              {activeView === "grid" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredSpeedActive.map((market) => (
+                    <SpeedMarketCard key={`speed-${market.marketId}`} market={market} />
+                  ))}
+                  {activeRegular.map((market) => (
+                    <MarketCard key={market.address} market={market} />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredSpeedActive.map((market) => (
+                    <SpeedMarketCard key={`speed-${market.marketId}`} market={market} />
+                  ))}
+                  {activeRegular.map((market) => (
+                    <MarketCard key={market.address} market={market} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Ended / Resolved Markets Section */}
+          {/* ── Ended & Resolved Section ── */}
           {hasEndedContent && (
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-lg font-semibold text-slate-400">Ended & Resolved</h2>
-                <span className="text-sm text-slate-600">
-                  ({filteredSpeedResolved.length + endedRegular.length})
-                </span>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-slate-400">Ended & Resolved</h2>
+                  <span className="text-sm text-slate-600">
+                    ({totalEnded})
+                  </span>
+                </div>
+                <ViewToggle view={endedView} onChange={setEndedView} />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSpeedResolved.map((market) => (
-                  <SpeedMarketCard key={`speed-resolved-${market.marketId}`} market={market} />
-                ))}
-                {endedRegular.map((market) => (
-                  <MarketCard key={market.address} market={market} />
-                ))}
-              </div>
+
+              {endedView === "grid" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {visibleEndedSpeed.map((market) => (
+                    <SpeedMarketCard key={`speed-resolved-${market.marketId}`} market={market} />
+                  ))}
+                  {visibleEndedRegular.map((market) => (
+                    <MarketCard key={market.address} market={market} />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {visibleEndedSpeed.map((market) => (
+                    <SpeedMarketCard key={`speed-resolved-${market.marketId}`} market={market} />
+                  ))}
+                  {visibleEndedRegular.map((market) => (
+                    <MarketCard key={market.address} market={market} />
+                  ))}
+                </div>
+              )}
+
+              {/* Show More */}
+              {hasMoreEnded && (
+                <button
+                  onClick={() => setShowAllEnded(true)}
+                  className="mt-4 w-full py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-teal-300 border border-slate-700/30 hover:border-teal-500/30 transition-colors"
+                >
+                  Show {totalEnded - visibleEndedTotal} more ended markets
+                </button>
+              )}
+              {showAllEnded && totalEnded > ENDED_INITIAL_SHOW && (
+                <button
+                  onClick={() => setShowAllEnded(false)}
+                  className="mt-4 w-full py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  Show less
+                </button>
+              )}
             </div>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Grid/List Toggle ── */
+
+function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode) => void }) {
+  return (
+    <div className="flex items-center gap-1 bg-slate-800/40 rounded-lg p-0.5">
+      <button
+        onClick={() => onChange("grid")}
+        className={cn(
+          "p-1.5 rounded-md transition-colors",
+          view === "grid" ? "bg-teal-500/15 text-teal-300" : "text-slate-500 hover:text-slate-300",
+        )}
+        title="Grid view"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      </button>
+      <button
+        onClick={() => onChange("list")}
+        className={cn(
+          "p-1.5 rounded-md transition-colors",
+          view === "list" ? "bg-teal-500/15 text-teal-300" : "text-slate-500 hover:text-slate-300",
+        )}
+        title="List view"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <rect x="1" y="2" width="14" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="1" y="7" width="14" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="1" y="12" width="14" height="3" rx="1" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      </button>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { resolveSlotsJob, registerPendingSlot } from "./jobs/resolveSlots.js";
 import { recycleLiquidityJob, registerResolvedMarket } from "./jobs/recycleLiquidity.js";
 import { scanSpeedMarkets } from "./jobs/scanMarkets.js";
 import { startHealthServer, healthState } from "./monitoring/health.js";
+import { startEventWatcher } from "./monitoring/eventWatcher.js";
 import { SPEED_ASSETS, SLOT_DURATION } from "./config.js";
 
 console.log("=".repeat(60));
@@ -129,8 +130,9 @@ async function startupRecovery() {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  // Start health server immediately
+  // Start health server + live event watcher
   startHealthServer();
+  startEventWatcher();
 
   // Step 1: Recover state from on-chain
   await startupRecovery();

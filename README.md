@@ -16,7 +16,6 @@
   </p>
 </p>
 
----
 ## HashKey Chain Horizon Hackathon
 
 HashPredict is built for the **HashKey Chain Horizon Hackathon**. It demonstrates a full-stack prediction market platform deployed entirely on HashKey Chain Testnet, showcasing:
@@ -26,29 +25,22 @@ HashPredict is built for the **HashKey Chain Horizon Hackathon**. It demonstrate
 - **Real-time infrastructure** — Automated keeper bot + Pyth oracle streaming
 - **Production readiness** — End-to-end trading, resolution, and settlement
 
----
 
 ## Live Demo
 
 **[https://hashpredict.xyz](https://hashpredict.xyz)**
 
+[Demo Video](https://youtu.be/_pMVtzJschs) 
+
 > Connect a wallet to HashKey Chain Testnet (Chain ID 133). Use the Faucet page to get test USDT, then trade on any market.
 
----
 
 ## Screenshots
 
-| Home Page | Speed Market Detail |
-|---|---|
-| ![Home](./docs/screenshots/home.png) | ![Speed](./docs/screenshots/speed-detail.png) |
+<img width="1502" height="857" alt="Screenshot 2026-04-15 at 8 52 44 PM" src="https://github.com/user-attachments/assets/8880bad0-b656-45b8-94d5-20bab98d81e3" />
 
-| Trading Panel | Leaderboard |
-|---|---|
-| ![Trading](./docs/screenshots/trading.png) | ![Leaderboard](./docs/screenshots/leaderboard.png) |
+<img width="1100" height="853" alt="Screenshot 2026-04-15 at 8 54 02 PM" src="https://github.com/user-attachments/assets/a901688b-45da-444b-9e55-3571f3e0556e" />
 
-> *Add screenshots to `docs/screenshots/` before submission*
-
----
 
 ## What is HashPredict?
 
@@ -60,8 +52,6 @@ It offers two types of markets:
 2. **Speed Markets** — 60-minute binary options on live crypto prices (BTC, ETH, SOL). Predict whether the price goes UP or DOWN from the strike price. New markets are created automatically every 60 minutes by a keeper bot.
 
 All trades are gasless through an embedded wallet and ERC-2771 relayer — no MetaMask popups, no gas fees.
-
----
 
 ## How It Works
 
@@ -94,7 +84,6 @@ User creates embedded wallet (localStorage)
   → User pays $0 gas
 ```
 
----
 
 ## Architecture
 
@@ -137,7 +126,6 @@ User creates embedded wallet (localStorage)
                          └─────────────┘
 ```
 
----
 
 ## Tech Stack
 
@@ -154,7 +142,6 @@ User creates embedded wallet (localStorage)
 | **Chain** | HashKey Chain Testnet | Chain ID 133 |
 | **Styling** | Tailwind CSS v4 | 4.x |
 
----
 
 ## Smart Contracts
 
@@ -175,7 +162,6 @@ All contracts are deployed on **HashKey Chain Testnet**:
 - **Internal balance tracking**: Speed markets use `upBalances[marketId][user]` instead of ERC-20 outcome tokens — saves gas for short-lived markets
 - **ERC-2771 gasless**: `_msgSender()` throughout for meta-transaction support via trusted forwarder
 
----
 
 ## Key Features
 
@@ -188,7 +174,6 @@ All contracts are deployed on **HashKey Chain Testnet**:
 - **Portfolio Tracking** — View all positions across prediction and speed markets with claim support
 - **Cyberpunk UI** — Glassmorphism, neon glow effects, animated floating elements
 
----
 
 ## Setup & Deployment
 
@@ -257,7 +242,6 @@ cast send 0x8065Fec351216Fbd636dc3216884A2eDbBdE1bE2 "faucet(uint256)" 100000000
   --rpc-url https://testnet.hsk.xyz --private-key $PRIVATE_KEY
 ```
 
----
 
 ## Project Structure
 
@@ -284,7 +268,6 @@ HashKey-Chain-Horizon-Hackathon/
 │       └── index.ts        # Cron scheduler
 └── README.md
 ```
----
 
 ## License
 

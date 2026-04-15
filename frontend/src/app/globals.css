@@ -283,3 +283,49 @@ body::after {
   background: rgba(20, 184, 166, 0.3);
   color: white;
 }
+
+/* ─── Hero visual animations ─────────────────────── */
+
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+.hero-float {
+  animation: hero-float 6s ease-in-out infinite;
+}
+
+@keyframes hero-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.hero-orbit {
+  animation: hero-orbit 20s linear infinite;
+}
+.hero-orbit-reverse {
+  animation: hero-orbit 30s linear infinite reverse;
+}
+
+@keyframes hero-draw {
+  from { stroke-dashoffset: 400; }
+  to { stroke-dashoffset: 0; }
+}
+.hero-draw-line {
+  stroke-dasharray: 400;
+  animation: hero-draw 2.5s ease-out forwards;
+}
+
+@keyframes hero-star-twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.8); }
+}
+.hero-star {
+  animation: hero-star-twinkle 3s ease-in-out infinite;
+}
+
+@keyframes hero-dash-flow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -16; }
+}
+.hero-dash-animate {
+  animation: hero-dash-flow 4s linear infinite;
+}

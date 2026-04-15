@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { FORWARDER_ADDRESS, FORWARDER_ABI, MARKET_ABI, USDT_ABI } from "@/lib/contracts";
 import { publicClient } from "@/lib/publicClient";
 import { getEmbeddedWallet, getEmbeddedWalletClient, getEmbeddedAccount } from "@/lib/embeddedWallet";
+import { explorerTxUrl } from "@/lib/utils";
 
 // EIP-712 types for the ERC2771Forwarder
 const FORWARD_REQUEST_TYPES = {
@@ -250,7 +251,9 @@ export function useGaslessBuy(
 
       const result = await submitToRelayer({ permit, forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Trade confirmed!");
+      toast.success("Trade confirmed!", {
+        action: { label: "View Transaction", onClick: () => window.open(explorerTxUrl(result.txHash), "_blank") },
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Trade failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
@@ -302,7 +305,9 @@ export function useGaslessSell(
 
       const result = await submitToRelayer({ permit, forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Sell confirmed!");
+      toast.success("Sell confirmed!", {
+        action: { label: "View Transaction", onClick: () => window.open(explorerTxUrl(result.txHash), "_blank") },
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sell failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
@@ -344,7 +349,9 @@ export function useGaslessClaim(marketAddress: `0x${string}`) {
 
       const result = await submitToRelayer({ forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Winnings claimed!");
+      toast.success("Winnings claimed!", {
+        action: { label: "View Transaction", onClick: () => window.open(explorerTxUrl(result.txHash), "_blank") },
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Claim failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);

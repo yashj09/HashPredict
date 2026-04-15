@@ -134,8 +134,8 @@ export function MarketGrid() {
                 activeFilter === f
                   ? f === "Speed"
                     ? "bg-amber-600 text-white"
-                    : "btn-gradient-primary text-white"
-                  : "glass-panel text-slate-400 hover:text-slate-200",
+                    : "bg-teal-600 text-white"
+                  : "bg-slate-800/40 border border-slate-700/30 text-slate-400 hover:text-slate-200 hover:bg-slate-700/40",
               )}
             >
               {f}

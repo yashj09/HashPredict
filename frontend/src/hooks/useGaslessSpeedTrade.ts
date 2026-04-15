@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { FORWARDER_ADDRESS, FORWARDER_ABI, SPEED_MARKET_ABI, USDT_ABI, SPEED_MARKET_ADDRESS, USDT_ADDRESS } from "@/lib/contracts";
 import { publicClient } from "@/lib/publicClient";
 import { getEmbeddedWallet, getEmbeddedWalletClient, getEmbeddedAccount } from "@/lib/embeddedWallet";
+import { explorerTxUrl } from "@/lib/utils";
 
 const FORWARD_REQUEST_TYPES = {
   ForwardRequest: [
@@ -231,7 +232,12 @@ export function useGaslessSpeedBuy() {
 
       const result = await submitToRelayer({ permit, forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Speed trade confirmed!");
+      toast.success("Speed trade confirmed!", {
+        action: {
+          label: "View Transaction",
+          onClick: () => window.open(explorerTxUrl(result.txHash), "_blank"),
+        },
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Trade failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);
@@ -274,7 +280,12 @@ export function useGaslessSpeedClaim() {
 
       const result = await submitToRelayer({ forwardRequest });
       setTxHash(result.txHash);
-      toast.success("Winnings claimed!");
+      toast.success("Winnings claimed!", {
+        action: {
+          label: "View Transaction",
+          onClick: () => window.open(explorerTxUrl(result.txHash), "_blank"),
+        },
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Claim failed";
       toast.error(msg.length > 200 ? msg.slice(0, 200) + "..." : msg);

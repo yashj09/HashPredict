@@ -9,7 +9,7 @@ import { useSpeedBuy, useSpeedClaim, useSpeedUserBalances } from "@/hooks/useSpe
 import { useGaslessSpeedBuy, useGaslessSpeedClaim } from "@/hooks/useGaslessSpeedTrade";
 import { useGaslessAvailable } from "@/hooks/useGaslessTrade";
 import { useEmbeddedWallet } from "@/hooks/useEmbeddedWallet";
-import { formatUSDT, cn } from "@/lib/utils";
+import { formatUSDT, cn, explorerTxUrl } from "@/lib/utils";
 
 type Side = "up" | "down";
 
@@ -172,8 +172,10 @@ export function SpeedTradingPanel({
       if (useEmbeddedWalletMode) {
         await gaslessBuy(market.marketId, isUp, amount);
       } else {
-        await buy(market.marketId, isUp, amount);
-        toast.success(`${isUp ? "UP" : "DOWN"} trade submitted!`);
+        const txHash = await buy(market.marketId, isUp, amount);
+        toast.success(`${isUp ? "UP" : "DOWN"} trade submitted!`, {
+          action: txHash ? { label: "View Transaction", onClick: () => window.open(explorerTxUrl(txHash), "_blank") } : undefined,
+        });
         setAmount("");
         onTradeComplete?.();
       }
@@ -188,8 +190,10 @@ export function SpeedTradingPanel({
       if (useEmbeddedWalletMode) {
         await gaslessClaim(market.marketId);
       } else {
-        await claim(market.marketId);
-        toast.success("Claimed!");
+        const txHash = await claim(market.marketId);
+        toast.success("Claimed!", {
+          action: txHash ? { label: "View Transaction", onClick: () => window.open(explorerTxUrl(txHash), "_blank") } : undefined,
+        });
       }
       onTradeComplete?.();
     } catch (err: unknown) {

@@ -16,7 +16,8 @@ export interface SpeedTradeRecord {
 export function useSpeedTradeHistory(marketId: bigint) {
   return useQuery<SpeedTradeRecord[]>({
     queryKey: ["speedTradeHistory", marketId.toString()],
-    staleTime: 15_000,
+    staleTime: 10_000,
+    refetchInterval: 10_000,
     retry: 1,
     queryFn: async () => {
       const events = await fetchSpeedTradeEvents(marketId);

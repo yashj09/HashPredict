@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useReadContract } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
 import { SPEED_MARKET_ADDRESS, SPEED_MARKET_ABI } from "@/lib/contracts";
 import type { SpeedMarketData } from "@/hooks/useSpeedMarkets";
 import { SpeedMarketInfo } from "@/components/speed/SpeedMarketInfo";
@@ -13,6 +14,7 @@ import { SpeedTradingPanel } from "@/components/speed/SpeedTradingPanel";
 export default function SpeedMarketDetailPage() {
   const params = useParams();
   const marketId = BigInt(params.id as string);
+  const queryClient = useQueryClient();
 
   const { data: raw, isLoading, refetch } = useReadContract({
     address: SPEED_MARKET_ADDRESS,
@@ -82,7 +84,10 @@ export default function SpeedMarketDetailPage() {
 
         {/* Right: Trading panel */}
         <div className="space-y-4">
-          <SpeedTradingPanel market={market} onTradeComplete={refetch} />
+          <SpeedTradingPanel market={market} onTradeComplete={() => {
+            refetch();
+            queryClient.invalidateQueries({ queryKey: ["speedTradeHistory", marketId.toString()] });
+          }} />
         </div>
       </div>
     </div>

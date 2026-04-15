@@ -128,19 +128,19 @@ export default function CreateMarketPage() {
       <div className="space-y-5">
         {/* Question */}
         <div>
-          <label className="block text-sm text-zinc-400 mb-1.5">Question</label>
+          <label className="block text-sm text-slate-400 mb-1.5">Question</label>
           <input
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Will BTC hit $100,000 by June 2026?"
-            className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500 placeholder-zinc-600"
+            className="w-full px-3 py-2.5 glass-input text-sm"
           />
         </div>
 
         {/* Category */}
         <div>
-          <label className="block text-sm text-zinc-400 mb-1.5">Category</label>
+          <label className="block text-sm text-slate-400 mb-1.5">Category</label>
           <div className="flex gap-2">
             {categories.map((c) => (
               <button
@@ -148,8 +148,8 @@ export default function CreateMarketPage() {
                 onClick={() => setCategory(c)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                   category === c
-                    ? "bg-indigo-600/20 border-indigo-500 text-indigo-400"
-                    : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                    ? "bg-teal-600/20 border-teal-500 text-teal-400"
+                    : "border-slate-700 text-slate-400 hover:border-slate-600"
                 }`}
               >
                 {c}
@@ -160,40 +160,40 @@ export default function CreateMarketPage() {
 
         {/* End date */}
         <div>
-          <label className="block text-sm text-zinc-400 mb-1.5">Resolution Date</label>
+          <label className="block text-sm text-slate-400 mb-1.5">Resolution Date</label>
           <input
             type="datetime-local"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500 [color-scheme:dark]"
+            className="w-full px-3 py-2.5 glass-input text-sm [color-scheme:dark]"
           />
         </div>
 
         {/* Initial liquidity */}
         <div>
-          <label className="block text-sm text-zinc-400 mb-1.5">Initial Liquidity (USDT)</label>
+          <label className="block text-sm text-slate-400 mb-1.5">Initial Liquidity (USDT)</label>
           <input
             type="number"
             value={liquidity}
             onChange={(e) => setLiquidity(e.target.value)}
             placeholder="100"
-            className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500 placeholder-zinc-600"
+            className="w-full px-3 py-2.5 glass-input text-sm"
           />
-          <p className="text-xs text-zinc-600 mt-1">Minimum 10 USDT. A 1% creation fee applies.</p>
+          <p className="text-xs text-slate-600 mt-1">Minimum 10 USDT. A 1% creation fee applies.</p>
         </div>
 
         {/* Oracle Resolution (optional) */}
         {hasResolver && (
-          <div className="rounded-xl border border-zinc-700 p-4 space-y-3">
+          <div className="rounded-xl border border-slate-700 p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm text-zinc-300 font-medium">
+              <label className="text-sm text-slate-300 font-medium">
                 Oracle Resolution (SUPRA)
               </label>
               <button
                 type="button"
                 onClick={() => setEnableOracle(!enableOracle)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  enableOracle ? "bg-indigo-600" : "bg-zinc-700"
+                  enableOracle ? "bg-teal-500" : "bg-slate-700"
                 }`}
               >
                 <span
@@ -207,11 +207,11 @@ export default function CreateMarketPage() {
             {enableOracle && (
               <>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Price Feed</label>
+                  <label className="block text-xs text-slate-500 mb-1">Price Feed</label>
                   <select
                     value={oraclePair}
                     onChange={(e) => setOraclePair(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3 py-2 glass-input text-sm"
                   >
                     {pairOptions.map((p) => (
                       <option key={p.key} value={p.key}>
@@ -222,18 +222,18 @@ export default function CreateMarketPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Target Price (USD)</label>
+                  <label className="block text-xs text-slate-500 mb-1">Target Price (USD)</label>
                   <input
                     type="number"
                     value={oracleTarget}
                     onChange={(e) => setOracleTarget(e.target.value)}
                     placeholder="e.g. 100000"
-                    className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500 placeholder-zinc-600"
+                    className="w-full px-3 py-2 glass-input text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1">Condition</label>
+                  <label className="block text-xs text-slate-500 mb-1">Condition</label>
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -241,7 +241,7 @@ export default function CreateMarketPage() {
                       className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                         oracleAbove
                           ? "bg-emerald-600/20 border-emerald-500 text-emerald-400"
-                          : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                          : "border-slate-700 text-slate-400 hover:border-slate-600"
                       }`}
                     >
                       YES if price above
@@ -252,7 +252,7 @@ export default function CreateMarketPage() {
                       className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                         !oracleAbove
                           ? "bg-red-600/20 border-red-500 text-red-400"
-                          : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                          : "border-slate-700 text-slate-400 hover:border-slate-600"
                       }`}
                     >
                       YES if price below
@@ -275,7 +275,7 @@ export default function CreateMarketPage() {
         <button
           onClick={handleCreate}
           disabled={!userAddress || isLoading || !question || !endDate || !liquidity}
-          className="w-full py-3 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed"
+          className="w-full py-3 rounded-lg text-sm font-semibold btn-gradient-primary text-white transition-colors disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed"
         >
           {!userAddress
             ? "Connect Wallet"

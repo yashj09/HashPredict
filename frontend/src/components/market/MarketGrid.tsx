@@ -90,7 +90,7 @@ export function MarketGrid() {
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-zinc-400">Failed to load markets. Make sure you&apos;re connected to HashKey Chain Testnet.</p>
+        <p className="text-slate-400">Failed to load markets. Make sure you&apos;re connected to HashKey Chain Testnet.</p>
       </div>
     );
   }
@@ -105,7 +105,7 @@ export function MarketGrid() {
       {/* Search */}
       <div className="relative mb-4">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500"
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500"
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth={2}
@@ -118,7 +118,7 @@ export function MarketGrid() {
           placeholder="Search markets..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-100 placeholder:text-zinc-500 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-sm"
         />
       </div>
 
@@ -134,8 +134,8 @@ export function MarketGrid() {
                 activeFilter === f
                   ? f === "Speed"
                     ? "bg-amber-600 text-white"
-                    : "bg-indigo-600 text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200",
+                    : "btn-gradient-primary text-white"
+                  : "glass-panel text-slate-400 hover:text-slate-200",
               )}
             >
               {f}
@@ -150,8 +150,8 @@ export function MarketGrid() {
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap",
                 sortBy === s
-                  ? "bg-zinc-700 text-zinc-100"
-                  : "bg-zinc-800/50 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300",
+                  ? "bg-teal-500/15 text-teal-300"
+                  : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/30",
               )}
             >
               {sortLabels[s]}
@@ -164,12 +164,12 @@ export function MarketGrid() {
       {allLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 h-48 animate-pulse" />
+            <div key={i} className="skeleton h-48" />
           ))}
         </div>
       ) : totalResults === 0 ? (
         <div className="text-center py-12">
-          <p className="text-zinc-500">No markets found.</p>
+          <p className="text-slate-500">No markets found.</p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -178,7 +178,7 @@ export function MarketGrid() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <h2 className="text-lg font-semibold text-white">Active Markets</h2>
-                <span className="text-sm text-zinc-500">
+                <span className="text-sm text-slate-500">
                   ({filteredSpeedActive.length + activeRegular.length})
                 </span>
               </div>
@@ -197,8 +197,8 @@ export function MarketGrid() {
           {hasEndedContent && (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-lg font-semibold text-zinc-400">Ended & Resolved</h2>
-                <span className="text-sm text-zinc-600">
+                <h2 className="text-lg font-semibold text-slate-400">Ended & Resolved</h2>
+                <span className="text-sm text-slate-600">
                   ({filteredSpeedResolved.length + endedRegular.length})
                 </span>
               </div>

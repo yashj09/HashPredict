@@ -25,8 +25,8 @@ export default function LeaderboardPage() {
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
               rankBy === "volume"
-                ? "bg-indigo-600 text-white"
-                : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                ? "btn-gradient-primary text-white"
+                : "glass-panel text-slate-400"
             )}
           >
             Volume
@@ -36,8 +36,8 @@ export default function LeaderboardPage() {
             className={cn(
               "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
               rankBy === "pnl"
-                ? "bg-indigo-600 text-white"
-                : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                ? "btn-gradient-primary text-white"
+                : "glass-panel text-slate-400"
             )}
           >
             Profit
@@ -47,26 +47,26 @@ export default function LeaderboardPage() {
 
       {isError ? (
         <div className="text-center py-12">
-          <p className="text-zinc-400">Failed to load leaderboard data.</p>
+          <p className="text-slate-400">Failed to load leaderboard data.</p>
         </div>
       ) : isLoading ? (
         <div className="space-y-3">
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="h-14 bg-zinc-800 rounded-xl animate-pulse"
+              className="h-14 bg-slate-800 rounded-xl animate-pulse"
             />
           ))}
         </div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-zinc-400">No trading activity yet.</p>
+          <p className="text-slate-400">No trading activity yet.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-zinc-500 text-xs uppercase border-b border-zinc-800">
+              <tr className="text-slate-500 text-xs uppercase border-b border-slate-800">
                 <th className="text-left py-3 px-4 font-medium w-12">Rank</th>
                 <th className="text-left py-3 px-4 font-medium">Trader</th>
                 <th className="text-right py-3 px-4 font-medium">Volume</th>
@@ -80,16 +80,16 @@ export default function LeaderboardPage() {
                 return (
                   <tr
                     key={entry.address}
-                    className="text-zinc-300 hover:bg-zinc-800/30 transition-colors"
+                    className="text-slate-300 hover:bg-slate-800/30 transition-colors"
                   >
                     <td className="py-3 px-4">
                       <span
                         className={cn(
                           "font-bold",
                           i === 0 && "text-amber-400",
-                          i === 1 && "text-zinc-300",
+                          i === 1 && "text-slate-300",
                           i === 2 && "text-amber-600",
-                          i > 2 && "text-zinc-500"
+                          i > 2 && "text-slate-500"
                         )}
                       >
                         #{i + 1}
@@ -100,7 +100,7 @@ export default function LeaderboardPage() {
                         href={explorerAddressUrl(entry.address)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hover:text-indigo-400 transition-colors"
+                        className="hover:text-teal-400 transition-colors"
                       >
                         {shortenAddress(entry.address)}
                       </a>
@@ -121,7 +121,7 @@ export default function LeaderboardPage() {
                           : -entry.realizedPnL
                       )}
                     </td>
-                    <td className="py-3 px-4 text-right text-zinc-500">
+                    <td className="py-3 px-4 text-right text-slate-500">
                       {entry.tradeCount}
                     </td>
                   </tr>

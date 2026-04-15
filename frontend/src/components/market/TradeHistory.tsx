@@ -12,11 +12,11 @@ export function TradeHistory({
   const { data: trades, isLoading, isError } = useMarketTradeHistory(marketAddress);
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+    <div className="glass-card p-5">
       <h3 className="text-lg font-semibold text-white mb-4">Trade History</h3>
 
       {isError ? (
-        <p className="text-zinc-500 text-sm text-center py-6">
+        <p className="text-slate-500 text-sm text-center py-6">
           Failed to load trade history.
         </p>
       ) : isLoading ? (
@@ -24,19 +24,19 @@ export function TradeHistory({
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
-              className="h-8 bg-zinc-800 rounded animate-pulse"
+              className="h-8 skeleton"
             />
           ))}
         </div>
       ) : !trades || trades.length === 0 ? (
-        <p className="text-zinc-500 text-sm text-center py-6">
+        <p className="text-slate-500 text-sm text-center py-6">
           No trades yet.
         </p>
       ) : (
         <div className="max-h-80 overflow-y-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-zinc-900/90 backdrop-blur">
-              <tr className="text-zinc-500 text-xs uppercase">
+            <thead className="sticky top-0 glass-thead">
+              <tr className="text-slate-500 text-xs uppercase">
                 <th className="text-left py-2 pr-2 font-medium">Time</th>
                 <th className="text-left py-2 pr-2 font-medium">User</th>
                 <th className="text-left py-2 pr-2 font-medium">Type</th>
@@ -45,10 +45,10 @@ export function TradeHistory({
                 <th className="text-right py-2 font-medium">Tx</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800/50">
+            <tbody className="divide-y divide-slate-800/30">
               {trades.map((trade, i) => (
-                <tr key={`${trade.txHash}-${i}`} className="text-zinc-300">
-                  <td className="py-2 pr-2 text-zinc-500 whitespace-nowrap">
+                <tr key={`${trade.txHash}-${i}`} className="text-slate-300">
+                  <td className="py-2 pr-2 text-slate-500 whitespace-nowrap">
                     {trade.timestamp > 0
                       ? formatDistanceToNow(trade.timestamp * 1000, {
                           addSuffix: true,
@@ -61,7 +61,7 @@ export function TradeHistory({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="hover:text-indigo-400 transition-colors"
+                      className="hover:text-teal-400 transition-colors"
                     >
                       {shortenAddress(trade.user)}
                     </a>
@@ -99,7 +99,7 @@ export function TradeHistory({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="text-xs text-zinc-600 hover:text-indigo-400 transition-colors"
+                      className="text-xs text-slate-600 hover:text-teal-400 transition-colors"
                     >
                       {trade.txHash.slice(0, 6)}...
                     </a>

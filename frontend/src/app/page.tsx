@@ -5,28 +5,29 @@ export default function Home() {
   return (
     <div>
       {/* Hero */}
-      <section className="border-b border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+      <section className="border-b border-[var(--glass-border)] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 relative">
           <div className="max-w-2xl">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
-              Predict the future.
+            <p className="text-teal-400 text-sm font-medium tracking-wider uppercase mb-3">On-chain prediction markets</p>
+            <h1 className="font-display text-4xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
+              Bet on what happens
               <br />
-              <span className="text-indigo-500">Trade on outcomes.</span>
+              <span className="neon-text">next.</span>
             </h1>
-            <p className="mt-4 text-lg text-zinc-400 leading-relaxed">
-              The first prediction market on HashKey Chain. Trade on crypto prices,
-              real-world assets, and ecosystem events using USDT.
+            <p className="mt-4 text-base text-slate-400 leading-relaxed max-w-lg">
+              Trade 15-minute speed markets on BTC, ETH &amp; SOL prices or long-term prediction markets &mdash; all on HashKey Chain with gasless USDT trades.
             </p>
-            <div className="mt-8 flex gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="/create"
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+                href="/speed"
+                className="btn-gradient-primary px-6 py-2.5 text-sm rounded-lg"
               >
-                Create Market
+                Trade Speed Markets
               </Link>
               <Link
                 href="/faucet"
-                className="px-6 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium rounded-lg transition-colors"
+                className="glass-panel px-6 py-2.5 text-slate-200 text-sm font-medium hover:text-white hover:bg-slate-700/40 transition-colors"
               >
                 Get Test USDT
               </Link>
@@ -37,7 +38,7 @@ export default function Home() {
 
       {/* Markets */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <h2 className="text-xl font-semibold text-white mb-6">Markets</h2>
+        <h2 className="font-display text-xl font-semibold text-white mb-6">Markets</h2>
         <MarketGrid />
       </section>
     </div>

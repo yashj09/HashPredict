@@ -34,12 +34,12 @@ export function ClaimPanel({ market }: { market: MarketData }) {
   if (!market.resolved || !userAddress) return null;
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
-      <h3 className="text-sm font-semibold text-zinc-300 mb-3">Claim Winnings</h3>
-      <p className="text-xs text-zinc-500 mb-1">
+    <div className="glass-card p-5">
+      <h3 className="text-sm font-semibold text-slate-300 mb-3">Claim Winnings</h3>
+      <p className="text-xs text-slate-500 mb-1">
         Market resolved: <span className="text-white font-medium">{market.outcomeYes ? "YES" : "NO"}</span>
       </p>
-      <p className="text-xs text-zinc-500 mb-4">
+      <p className="text-xs text-slate-500 mb-4">
         Your winning tokens:{" "}
         <span className="text-white font-medium">
           {hasWinnings ? parseFloat(formatUnits(winningBalance, 6)).toFixed(2) : "0"}
@@ -48,7 +48,7 @@ export function ClaimPanel({ market }: { market: MarketData }) {
       <button
         onClick={gaslessClaim}
         disabled={!hasWinnings || isGaslessClaiming || !wallet}
-        className="w-full py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed"
+        className="w-full py-2.5 rounded-lg text-sm font-semibold btn-gradient-up text-white transition-colors disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed"
       >
         {isGaslessClaiming ? "Claiming..." : hasWinnings ? "Claim Winnings" : "No Winnings to Claim"}
       </button>

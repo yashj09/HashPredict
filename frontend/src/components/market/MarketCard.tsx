@@ -19,18 +19,18 @@ export function MarketCard({ market }: { market: MarketData }) {
   const noPercent = 100 - yesPercent;
 
   const isEnded = Number(market.endTimestamp) * 1000 < Date.now();
-  const colorClass = categoryColors[market.category] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
+  const colorClass = categoryColors[market.category] ?? "bg-slate-500/10 text-slate-400 border-slate-500/20";
 
   return (
     <Link href={`/market/${market.address}`}>
-      <div className="group rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-zinc-700 hover:bg-zinc-900 transition-all cursor-pointer h-full flex flex-col">
+      <div className="group glass-card p-5 cursor-pointer h-full flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full border", colorClass)}>
             {market.category}
           </span>
           {market.resolved ? (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-700/50 text-zinc-300">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300">
               {market.outcomeYes ? "Resolved YES" : "Resolved NO"}
             </span>
           ) : (
@@ -46,7 +46,7 @@ export function MarketCard({ market }: { market: MarketData }) {
         </div>
 
         {/* Question */}
-        <h3 className="text-sm font-semibold text-zinc-100 mb-4 leading-snug line-clamp-2 flex-1">
+        <h3 className="text-sm font-semibold text-slate-100 mb-4 leading-snug line-clamp-2 flex-1">
           {market.question}
         </h3>
 
@@ -56,7 +56,7 @@ export function MarketCard({ market }: { market: MarketData }) {
             <span className="text-emerald-400 font-medium">Yes {yesPercent.toFixed(1)}%</span>
             <span className="text-red-400 font-medium">No {noPercent.toFixed(1)}%</span>
           </div>
-          <div className="h-2 rounded-full bg-zinc-800 overflow-hidden flex">
+          <div className="h-2 prob-bar-track flex">
             <div
               className="bg-emerald-500 transition-all duration-500"
               style={{ width: `${yesPercent}%` }}
@@ -69,7 +69,7 @@ export function MarketCard({ market }: { market: MarketData }) {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-zinc-500 pt-3 border-t border-zinc-800/50">
+        <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-[var(--glass-border)]">
           <span>Vol: ${formatUSDT(market.totalVolume)}</span>
           <span>Liquidity: ${formatUSDT(market.totalCollateral)}</span>
         </div>

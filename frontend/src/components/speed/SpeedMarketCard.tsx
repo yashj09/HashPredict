@@ -61,7 +61,7 @@ export function SpeedMarketCard({ market }: { market: SpeedMarketData }) {
 
   return (
     <Link href={`/speed/${market.marketId.toString()}`}>
-      <div className="group rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:border-zinc-700 hover:bg-zinc-900 transition-all cursor-pointer h-full flex flex-col">
+      <div className="group glass-card p-5 cursor-pointer h-full flex flex-col">
         {/* Header: asset + timer */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -88,12 +88,12 @@ export function SpeedMarketCard({ market }: { market: SpeedMarketData }) {
 
         {/* Strike price + live price */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-zinc-800/50 rounded-lg p-3">
-            <div className="text-xs text-zinc-500 mb-1">Strike Price</div>
+          <div className="glass-panel p-3">
+            <div className="text-xs text-slate-500 mb-1">Strike Price</div>
             <div className="text-sm font-semibold text-white">${formatStrikePrice(market.strikePrice)}</div>
           </div>
-          <div className="bg-zinc-800/50 rounded-lg p-3">
-            <div className="text-xs text-zinc-500 mb-1">Live Price</div>
+          <div className="glass-panel p-3">
+            <div className="text-xs text-slate-500 mb-1">Live Price</div>
             {livePrice ? (
               <div className={cn(
                 "text-sm font-semibold",
@@ -104,7 +104,7 @@ export function SpeedMarketCard({ market }: { market: SpeedMarketData }) {
                   : livePrice.price.toFixed(4)}
               </div>
             ) : (
-              <div className="text-sm text-zinc-600">Loading...</div>
+              <div className="text-sm text-slate-600">Loading...</div>
             )}
           </div>
         </div>
@@ -115,7 +115,7 @@ export function SpeedMarketCard({ market }: { market: SpeedMarketData }) {
             <span className="text-emerald-400 font-medium">UP {upPercent.toFixed(1)}%</span>
             <span className="text-red-400 font-medium">DOWN {downPercent.toFixed(1)}%</span>
           </div>
-          <div className="h-2 rounded-full bg-zinc-800 overflow-hidden flex">
+          <div className="h-2 rounded-full prob-bar-track flex">
             <div className="bg-emerald-500 transition-all duration-500" style={{ width: `${upPercent}%` }} />
             <div className="bg-red-500 transition-all duration-500" style={{ width: `${downPercent}%` }} />
           </div>
@@ -123,14 +123,14 @@ export function SpeedMarketCard({ market }: { market: SpeedMarketData }) {
 
         {/* User position */}
         {address && (upBalance > 0n || downBalance > 0n) && (
-          <div className="mb-3 pt-3 border-t border-zinc-800/50 flex justify-between text-xs text-zinc-500">
+          <div className="mb-3 pt-3 border-t border-[var(--glass-border)] flex justify-between text-xs text-slate-500">
             <span>UP: {formatUSDT(upBalance)}</span>
             <span>DOWN: {formatUSDT(downBalance)}</span>
           </div>
         )}
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-xs text-zinc-600 pt-3 border-t border-zinc-800/50">
+        <div className="flex items-center justify-between text-xs text-slate-600 pt-3 border-t border-[var(--glass-border)]">
           <span>Liquidity: ${formatUSDT(market.totalCollateral)}</span>
           <span>#{market.marketId.toString()}</span>
         </div>

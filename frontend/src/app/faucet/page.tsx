@@ -36,15 +36,15 @@ export default function FaucetPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-8">
+      <div className="glass-card p-8">
         <h1 className="text-2xl font-bold text-white mb-2">Test USDT Faucet</h1>
-        <p className="text-sm text-zinc-400 mb-6">
+        <p className="text-sm text-slate-400 mb-6">
           Get 1,000 test USDT on HashKey Chain Testnet to start trading on prediction markets.
         </p>
 
         {userAddress && balance != null && (
-          <div className="mb-6 p-3 rounded-lg bg-zinc-800/50">
-            <p className="text-xs text-zinc-500 mb-0.5">Your Balance</p>
+          <div className="mb-6 p-3 rounded-lg bg-slate-800/50">
+            <p className="text-xs text-slate-500 mb-0.5">Your Balance</p>
             <p className="text-xl font-bold text-white">
               {parseFloat(formatUnits(balance as bigint, 6)).toLocaleString()} USDT
             </p>
@@ -54,7 +54,7 @@ export default function FaucetPage() {
         <button
           onClick={handleFaucet}
           disabled={!userAddress || isLoading}
-          className="w-full py-3 rounded-lg text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed"
+          className="w-full py-3 rounded-lg text-sm font-semibold btn-gradient-primary text-white transition-colors disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed"
         >
           {!userAddress
             ? "Connect Wallet"
@@ -63,7 +63,7 @@ export default function FaucetPage() {
               : "Get 1,000 Test USDT"}
         </button>
 
-        <p className="text-xs text-zinc-600 mt-4">
+        <p className="text-xs text-slate-600 mt-4">
           This is test USDT on HashKey Chain Testnet. It has no real value.
         </p>
       </div>

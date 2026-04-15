@@ -36,18 +36,18 @@ export function PriceChart({
   const { data: priceHistory, isLoading, isError } = usePriceHistory(marketAddress);
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+    <div className="glass-card p-5">
       <h3 className="text-lg font-semibold text-white mb-4">Price History</h3>
 
       {isError ? (
         <div className="h-[300px] flex items-center justify-center">
-          <p className="text-zinc-500 text-sm">Failed to load price history.</p>
+          <p className="text-slate-500 text-sm">Failed to load price history.</p>
         </div>
       ) : isLoading ? (
-        <div className="h-[300px] bg-zinc-800 rounded-lg animate-pulse" />
+        <div className="h-[300px] skeleton" />
       ) : !priceHistory || priceHistory.length <= 1 ? (
         <div className="h-[300px] flex items-center justify-center">
-          <p className="text-zinc-500 text-sm">
+          <p className="text-slate-500 text-sm">
             No trading activity yet.
           </p>
         </div>
@@ -66,24 +66,24 @@ export function PriceChart({
             <XAxis
               dataKey="timestamp"
               tickFormatter={formatDate}
-              stroke="#52525b"
-              tick={{ fontSize: 11, fill: "#71717a" }}
+              stroke="#334155"
+              tick={{ fontSize: 11, fill: "#64748b" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               domain={[0, 100]}
               tickFormatter={(v) => `${v}%`}
-              stroke="#52525b"
-              tick={{ fontSize: 11, fill: "#71717a" }}
+              stroke="#334155"
+              tick={{ fontSize: 11, fill: "#64748b" }}
               axisLine={false}
               tickLine={false}
               width={45}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#18181b",
-                border: "1px solid #27272a",
+                backgroundColor: "#0a0e1a",
+                border: "1px solid rgba(20, 184, 166, 0.2)",
                 borderRadius: "8px",
                 fontSize: "12px",
               }}
@@ -92,7 +92,7 @@ export function PriceChart({
             />
             <ReferenceLine
               y={50}
-              stroke="#3f3f46"
+              stroke="#1e293b"
               strokeDasharray="3 3"
             />
             <Area
@@ -102,7 +102,7 @@ export function PriceChart({
               strokeWidth={2}
               fill="url(#yesGradient)"
               dot={false}
-              activeDot={{ r: 4, fill: "#10b981", stroke: "#09090b" }}
+              activeDot={{ r: 4, fill: "#10b981", stroke: "#0a0e1a" }}
             />
           </AreaChart>
         </ResponsiveContainer>

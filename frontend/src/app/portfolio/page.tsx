@@ -127,7 +127,7 @@ export default function PortfolioPage() {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <h1 className="text-2xl font-bold text-white mb-2">Portfolio</h1>
-        <p className="text-zinc-400">Connect your wallet to view your positions.</p>
+        <p className="text-slate-400">Connect your wallet to view your positions.</p>
       </div>
     );
   }
@@ -139,13 +139,13 @@ export default function PortfolioPage() {
       {(isLoading || speedLoading) ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 bg-zinc-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-20 skeleton" />
           ))}
         </div>
       ) : positions.length === 0 && speedPositions.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-zinc-400 mb-4">No positions yet.</p>
-          <Link href="/" className="text-indigo-400 hover:text-indigo-300 text-sm">
+          <p className="text-slate-400 mb-4">No positions yet.</p>
+          <Link href="/" className="text-teal-400 hover:text-teal-300 text-sm">
             Browse markets to start trading
           </Link>
         </div>
@@ -161,13 +161,13 @@ export default function PortfolioPage() {
 
             return (
               <Link key={`speed-${pos.market.marketId}`} href={`/speed/${pos.market.marketId.toString()}`}>
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 hover:border-zinc-700 transition-colors flex items-center justify-between gap-4">
+                <div className="glass-card p-4 transition-colors flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                         Speed
                       </span>
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
                         {pos.market.asset}
                       </span>
                       {pos.market.resolved && (
@@ -184,7 +184,7 @@ export default function PortfolioPage() {
                     <p className="text-sm font-medium text-white truncate">
                       {pos.market.asset} Speed Market — Strike ${formatStrikePrice(pos.market.strikePrice)}
                     </p>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       Prob: {upPercent.toFixed(1)}% UP | Liquidity: ${formatUSDT(pos.market.totalCollateral)}
                     </p>
                   </div>
@@ -226,20 +226,20 @@ export default function PortfolioPage() {
 
             return (
               <Link key={pos.market.address} href={`/market/${pos.market.address}`}>
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 hover:border-zinc-700 transition-colors flex items-center justify-between gap-4">
+                <div className="glass-card p-4 transition-colors flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20">
                         {pos.market.category}
                       </span>
                       {pos.market.resolved && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-700/50 text-zinc-300">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700/50 text-slate-300">
                           Resolved
                         </span>
                       )}
                     </div>
                     <p className="text-sm font-medium text-white truncate">{pos.market.question}</p>
-                    <p className="text-xs text-zinc-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       Prob: {yesPercent.toFixed(1)}% YES | Vol: ${formatUSDT(pos.market.totalVolume)}
                     </p>
                   </div>

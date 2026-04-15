@@ -53,8 +53,8 @@ function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.[0]) return null;
   const price = payload[0].value as number;
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
-      <p className="text-[10px] text-zinc-500 mb-0.5">{formatTime(label)}</p>
+    <div className="glass-panel px-3 py-2 shadow-xl">
+      <p className="text-[10px] text-slate-500 mb-0.5">{formatTime(label)}</p>
       <p className="text-sm font-bold text-white">${formatPrice(price)}</p>
     </div>
   );
@@ -72,7 +72,7 @@ function StrikeLabel({ viewBox, strike }: { viewBox?: any; strike: number }) {
         width={66}
         height={24}
         rx={6}
-        fill="#27272a"
+        fill="#1e293b"
         stroke="#f59e0b"
         strokeWidth={1}
       />
@@ -135,7 +135,7 @@ export function SpeedPriceChart({
         : "text-red-400";
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden">
+    <div className="glass-card overflow-hidden">
       {/* ── Header (Polymarket-style) ── */}
       <div className="px-5 pt-5 pb-4">
         <div className="flex items-start justify-between">
@@ -144,7 +144,7 @@ export function SpeedPriceChart({
             <h3 className="text-base font-bold text-white">
               {asset} Up or Down &ndash; 15 Minutes
             </h3>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               {new Date(expiry * 1000 - 900_000).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -194,7 +194,7 @@ export function SpeedPriceChart({
         {/* Price row */}
         <div className="flex items-end gap-6 mt-4">
           <div>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">
               Price To Beat
             </p>
             <p className="text-xl font-bold text-white tabular-nums">
@@ -203,7 +203,7 @@ export function SpeedPriceChart({
           </div>
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
                 Current Price
               </p>
               {diff !== null && (
@@ -229,7 +229,7 @@ export function SpeedPriceChart({
                 ${formatPrice(currentPrice)}
               </p>
             ) : (
-              <p className="text-xl font-bold text-zinc-600">&mdash;</p>
+              <p className="text-xl font-bold text-slate-600">&mdash;</p>
             )}
           </div>
         </div>
@@ -240,8 +240,8 @@ export function SpeedPriceChart({
         {snapshots.length < 2 ? (
           <div className="h-[280px] flex items-center justify-center">
             <div className="text-center">
-              <div className="inline-block w-5 h-5 border-2 border-zinc-700 border-t-amber-500 rounded-full animate-spin mb-2" />
-              <p className="text-zinc-500 text-xs">
+              <div className="inline-block w-5 h-5 border-2 border-slate-700 border-t-teal-400 rounded-full animate-spin mb-2" />
+              <p className="text-slate-500 text-xs">
                 Streaming live price&hellip;
               </p>
             </div>
@@ -274,14 +274,14 @@ export function SpeedPriceChart({
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#27272a"
+                stroke="#1e293b"
                 vertical={false}
               />
               <XAxis
                 dataKey="time"
                 tickFormatter={formatTime}
-                stroke="#3f3f46"
-                tick={{ fontSize: 10, fill: "#52525b" }}
+                stroke="#334155"
+                tick={{ fontSize: 10, fill: "#64748b" }}
                 axisLine={false}
                 tickLine={false}
                 minTickGap={60}
@@ -289,8 +289,8 @@ export function SpeedPriceChart({
               <YAxis
                 domain={[yMin, yMax]}
                 tickFormatter={(v) => `$${formatPrice(v)}`}
-                stroke="#3f3f46"
-                tick={{ fontSize: 10, fill: "#52525b" }}
+                stroke="#334155"
+                tick={{ fontSize: 10, fill: "#64748b" }}
                 axisLine={false}
                 tickLine={false}
                 width={75}
@@ -313,7 +313,7 @@ export function SpeedPriceChart({
                 activeDot={{
                   r: 4,
                   fill: isAbove ? "#10b981" : "#ef4444",
-                  stroke: "#09090b",
+                  stroke: "#0a0e1a",
                   strokeWidth: 2,
                 }}
                 isAnimationActive={false}

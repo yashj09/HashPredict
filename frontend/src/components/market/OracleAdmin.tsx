@@ -83,10 +83,10 @@ export function OracleAdmin({
   };
 
   return (
-    <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4">
+    <div className="glass-card p-4">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-2 h-2 rounded-full bg-zinc-500" />
-        <h4 className="text-sm font-medium text-zinc-300">
+        <div className="w-2 h-2 rounded-full bg-slate-500" />
+        <h4 className="text-sm font-medium text-slate-300">
           Configure Oracle (Admin)
         </h4>
       </div>
@@ -94,11 +94,11 @@ export function OracleAdmin({
       <div className="space-y-3">
         {/* Price Pair */}
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">Price Feed</label>
+          <label className="block text-xs text-slate-500 mb-1">Price Feed</label>
           <select
             value={selectedPair}
             onChange={(e) => setSelectedPair(e.target.value)}
-            className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
+            className="w-full px-3 py-2 glass-input text-sm"
           >
             {pairOptions.map((p) => (
               <option key={p.key} value={p.key}>
@@ -110,7 +110,7 @@ export function OracleAdmin({
 
         {/* Target Price */}
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">
+          <label className="block text-xs text-slate-500 mb-1">
             Target Price (USD)
           </label>
           <input
@@ -118,20 +118,20 @@ export function OracleAdmin({
             value={targetPrice}
             onChange={(e) => setTargetPrice(e.target.value)}
             placeholder="e.g. 100000"
-            className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500 placeholder-zinc-600"
+            className="w-full px-3 py-2 glass-input text-sm placeholder-zinc-600"
           />
         </div>
 
         {/* Condition */}
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">Condition</label>
+          <label className="block text-xs text-slate-500 mb-1">Condition</label>
           <div className="flex gap-2">
             <button
               onClick={() => setResolveYesIfAbove(true)}
               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                 resolveYesIfAbove
                   ? "bg-emerald-600/20 border-emerald-500 text-emerald-400"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                  : "border-slate-700/50 text-slate-400 hover:border-slate-600"
               }`}
             >
               YES if above
@@ -141,7 +141,7 @@ export function OracleAdmin({
               className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                 !resolveYesIfAbove
                   ? "bg-red-600/20 border-red-500 text-red-400"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                  : "border-slate-700/50 text-slate-400 hover:border-slate-600"
               }`}
             >
               YES if below
@@ -151,7 +151,7 @@ export function OracleAdmin({
 
         {/* Preview */}
         {targetPrice && (
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-slate-400">
             Resolves YES if {SUPRA_PAIRS[selectedPair].label}{" "}
             {resolveYesIfAbove ? "≥" : "<"} ${Number(targetPrice).toLocaleString()}
           </p>
@@ -161,7 +161,7 @@ export function OracleAdmin({
         <button
           onClick={handleConfigure}
           disabled={isLoading || !targetPrice}
-          className="w-full py-2 rounded-lg text-sm font-medium bg-zinc-700 hover:bg-zinc-600 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-2 rounded-lg text-sm font-medium btn-gradient-primary text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Configuring..." : "Configure Oracle"}
         </button>

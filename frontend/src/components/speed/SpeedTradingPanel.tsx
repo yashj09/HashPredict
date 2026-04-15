@@ -33,13 +33,13 @@ function TradingWalletPanel() {
 
   if (!hasWallet) {
     return (
-      <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-800/30 p-4 mb-4">
-        <p className="text-xs text-zinc-400 mb-2">
+      <div className="glass-panel border-dashed p-4 mb-4">
+        <p className="text-xs text-slate-400 mb-2">
           Create a trading wallet for instant, gasless trades — no MetaMask popups.
         </p>
         <button
           onClick={create}
-          className="w-full py-2 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+          className="w-full py-2 rounded-lg text-sm btn-gradient-primary text-white"
         >
           Create Trading Wallet
         </button>
@@ -48,15 +48,15 @@ function TradingWalletPanel() {
   }
 
   return (
-    <div className="rounded-lg border border-zinc-700 bg-zinc-800/30 p-3 mb-4">
+    <div className="glass-panel p-3 mb-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span className="text-xs font-medium text-zinc-300">Trading Wallet</span>
+          <span className="text-xs font-medium text-slate-300">Trading Wallet</span>
         </div>
         <button
           onClick={() => setShowManage(!showManage)}
-          className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
         >
           {showManage ? "Hide" : "Manage"}
         </button>
@@ -64,22 +64,22 @@ function TradingWalletPanel() {
 
       <div className="flex items-baseline justify-between">
         <span className="text-lg font-semibold text-white">
-          {parseFloat(formattedBalance).toFixed(2)} <span className="text-xs text-zinc-400">USDT</span>
+          {parseFloat(formattedBalance).toFixed(2)} <span className="text-xs text-slate-400">USDT</span>
         </span>
-        <span className="text-[10px] text-zinc-600 font-mono">
+        <span className="text-[10px] text-slate-600 font-mono">
           {wallet!.address.slice(0, 6)}...{wallet!.address.slice(-4)}
         </span>
       </div>
 
       {showManage && (
-        <div className="mt-3 space-y-2 pt-3 border-t border-zinc-700/50">
+        <div className="mt-3 space-y-2 pt-3 border-t border-[var(--glass-border)]">
           <div className="flex gap-2">
             <input
               type="number"
               placeholder="Amount"
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
-              className="flex-1 px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500"
+              className="flex-1 px-2 py-1.5 glass-input text-xs"
             />
             <button
               onClick={() => {
@@ -100,7 +100,7 @@ function TradingWalletPanel() {
               placeholder="Amount"
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}
-              className="flex-1 px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500"
+              className="flex-1 px-2 py-1.5 glass-input text-xs"
             />
             <button
               onClick={() => {
@@ -110,7 +110,7 @@ function TradingWalletPanel() {
                 }
               }}
               disabled={isWithdrawing}
-              className="px-3 py-1.5 rounded text-xs font-medium bg-zinc-700 hover:bg-zinc-600 text-white transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 rounded text-xs font-medium bg-slate-700 hover:bg-slate-600 text-white transition-colors disabled:opacity-50"
             >
               {isWithdrawing ? "..." : "Withdraw"}
             </button>
@@ -199,8 +199,8 @@ export function SpeedTradingPanel({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
-      <h3 className="text-sm font-semibold text-zinc-300 mb-4">Trade</h3>
+    <div className="glass-card p-5">
+      <h3 className="text-sm font-semibold text-slate-300 mb-4">Trade</h3>
 
       {/* Trading wallet */}
       {userAddress && gaslessAvailable && <TradingWalletPanel />}
@@ -239,7 +239,7 @@ export function SpeedTradingPanel({
                 "flex-1 py-2 rounded-lg text-sm font-medium border transition-colors",
                 side === "up"
                   ? "bg-emerald-600/20 border-emerald-500 text-emerald-400"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-600",
+                  : "border-slate-700 text-slate-400 hover:border-slate-600",
               )}
             >
               UP
@@ -250,7 +250,7 @@ export function SpeedTradingPanel({
                 "flex-1 py-2 rounded-lg text-sm font-medium border transition-colors",
                 side === "down"
                   ? "bg-red-600/20 border-red-500 text-red-400"
-                  : "border-zinc-700 text-zinc-400 hover:border-zinc-600",
+                  : "border-slate-700 text-slate-400 hover:border-slate-600",
               )}
             >
               DOWN
@@ -266,8 +266,8 @@ export function SpeedTradingPanel({
                 className={cn(
                   "flex-1 py-1.5 text-xs rounded-md font-medium transition-colors",
                   amount === qa
-                    ? "bg-indigo-600 text-white"
-                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700",
+                    ? "btn-gradient-primary text-white"
+                    : "glass-panel text-slate-400 hover:text-slate-200",
                 )}
               >
                 ${qa}
@@ -277,7 +277,7 @@ export function SpeedTradingPanel({
 
           {/* Amount input */}
           <div className="mb-4">
-            <div className="flex justify-between text-xs text-zinc-500 mb-1.5">
+            <div className="flex justify-between text-xs text-slate-500 mb-1.5">
               <span>Amount (USDT)</span>
               <span>Balance: {useEmbeddedWalletMode ? formatUSDT(embeddedUsdtBalance) : "--"}</span>
             </div>
@@ -286,7 +286,7 @@ export function SpeedTradingPanel({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500 placeholder-zinc-600"
+              className="w-full px-3 py-2.5 glass-input text-sm"
             />
           </div>
 
@@ -297,10 +297,10 @@ export function SpeedTradingPanel({
             className={cn(
               "w-full py-3 rounded-lg text-sm font-bold transition-colors",
               !userAddress || isLoading || !amount
-                ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                ? "bg-slate-800/50 text-slate-500 cursor-not-allowed"
                 : side === "up"
-                  ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                  : "bg-red-600 hover:bg-red-500 text-white",
+                  ? "btn-gradient-up text-white"
+                  : "btn-gradient-down text-white",
             )}
           >
             {!userAddress
@@ -311,7 +311,7 @@ export function SpeedTradingPanel({
           </button>
 
           {useEmbeddedWalletMode && (
-            <p className="text-[10px] text-zinc-600 text-center mt-2">
+            <p className="text-[10px] text-slate-600 text-center mt-2">
               Instant execution — no popups, no gas fees
             </p>
           )}
@@ -320,15 +320,15 @@ export function SpeedTradingPanel({
 
       {/* Not active, not resolved */}
       {!isActive && !market.resolved && (
-        <div className="text-center py-4 text-zinc-500 text-sm">
+        <div className="text-center py-4 text-slate-500 text-sm">
           Market expired — awaiting resolution
         </div>
       )}
 
       {/* User positions */}
       {userAddress && (upBalance > 0n || downBalance > 0n) && (
-        <div className="mt-4 pt-4 border-t border-zinc-800">
-          <p className="text-xs text-zinc-500 mb-2">Your Positions</p>
+        <div className="mt-4 pt-4 border-t border-slate-800">
+          <p className="text-xs text-slate-500 mb-2">Your Positions</p>
           <div className="flex justify-between text-sm">
             <span className="text-emerald-400">
               UP: {parseFloat(formatUnits(upBalance, 6)).toFixed(2)}

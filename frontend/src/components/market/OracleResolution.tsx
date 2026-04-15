@@ -38,15 +38,15 @@ export function OracleResolution({
         </h4>
       </div>
 
-      <p className="text-xs text-zinc-400 mb-1">SUPRA Oracle Price Feed</p>
+      <p className="text-xs text-slate-400 mb-1">SUPRA Oracle Price Feed</p>
       <p className="text-sm text-white font-medium mb-3">
         {targetDisplay}
       </p>
 
       {resolved ? (
-        <p className="text-xs text-zinc-500">Market already resolved.</p>
+        <p className="text-xs text-slate-500">Market already resolved.</p>
       ) : !marketEnded ? (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-slate-500">
           Oracle resolution available after market ends.
         </p>
       ) : (
@@ -59,7 +59,7 @@ export function OracleResolution({
         </button>
       )}
 
-      <p className="text-xs text-zinc-600 mt-2">
+      <p className="text-xs text-slate-600 mt-2">
         Anyone can trigger resolution once the market has ended.
       </p>
     </div>

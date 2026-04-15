@@ -24,13 +24,13 @@ export default function SpeedMarketsPage() {
   return (
     <div>
       {/* Header */}
-      <section className="border-b border-zinc-800">
+      <section className="border-b border-[var(--glass-border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="max-w-2xl">
             <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
               Speed Markets
             </h1>
-            <p className="mt-3 text-zinc-400 leading-relaxed">
+            <p className="mt-3 text-slate-400 leading-relaxed">
               15-minute binary markets on crypto prices. Predict whether the price
               goes UP or DOWN from the strike price. New markets created automatically
               every 15 minutes.
@@ -50,8 +50,8 @@ export default function SpeedMarketsPage() {
               className={cn(
                 "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 filter === asset
-                  ? "bg-indigo-600 text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200",
+                  ? "btn-gradient-primary text-white"
+                  : "glass-panel text-slate-400 hover:text-slate-200",
               )}
             >
               {asset}
@@ -61,7 +61,7 @@ export default function SpeedMarketsPage() {
 
         {/* Loading */}
         {isLoading && (
-          <div className="text-center py-20 text-zinc-500">
+          <div className="text-center py-20 text-slate-500">
             Loading speed markets...
           </div>
         )}
@@ -79,14 +79,14 @@ export default function SpeedMarketsPage() {
             <h2 className="text-lg font-semibold text-white mb-4">
               Active Markets
               {filteredActive.length > 0 && (
-                <span className="ml-2 text-sm font-normal text-zinc-500">
+                <span className="ml-2 text-sm font-normal text-slate-500">
                   ({filteredActive.length})
                 </span>
               )}
             </h2>
 
             {filteredActive.length === 0 ? (
-              <div className="text-center py-12 text-zinc-500 border border-dashed border-zinc-800 rounded-xl mb-8">
+              <div className="text-center py-12 text-slate-500 border border-dashed border-[var(--glass-border)] rounded-xl mb-8">
                 No active speed markets. The keeper bot creates new markets every 15 minutes.
               </div>
             ) : (
@@ -102,7 +102,7 @@ export default function SpeedMarketsPage() {
               <>
                 <h2 className="text-lg font-semibold text-white mb-4">
                   Recent Results
-                  <span className="ml-2 text-sm font-normal text-zinc-500">
+                  <span className="ml-2 text-sm font-normal text-slate-500">
                     ({filteredResolved.length})
                   </span>
                 </h2>

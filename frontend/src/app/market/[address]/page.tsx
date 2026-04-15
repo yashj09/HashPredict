@@ -19,9 +19,9 @@ export default function MarketPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-zinc-800 rounded w-3/4" />
-          <div className="h-48 bg-zinc-800 rounded-xl" />
-          <div className="h-64 bg-zinc-800 rounded-xl" />
+          <div className="h-8 skeleton w-3/4" />
+          <div className="h-48 skeleton" />
+          <div className="h-64 skeleton" />
         </div>
       </div>
     );
@@ -31,8 +31,8 @@ export default function MarketPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <h2 className="text-xl font-semibold text-white mb-2">Market not found</h2>
-        <p className="text-zinc-400 mb-6">This market doesn&apos;t exist or couldn&apos;t be loaded.</p>
-        <Link href="/" className="text-indigo-400 hover:text-indigo-300">
+        <p className="text-slate-400 mb-6">This market doesn&apos;t exist or couldn&apos;t be loaded.</p>
+        <Link href="/" className="text-teal-400 hover:text-teal-300">
           Back to markets
         </Link>
       </div>
@@ -41,7 +41,7 @@ export default function MarketPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-300 mb-6 inline-block">
+      <Link href="/" className="text-sm text-slate-500 hover:text-teal-300 mb-6 inline-block">
         &larr; Back to markets
       </Link>
 

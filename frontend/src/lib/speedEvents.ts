@@ -222,4 +222,87 @@ export async function fetchAllSpeedMarketEvents(
   }
 }
 
+// ---------- Global fetchers (for leaderboard — no marketId filter) ----------
+
+const SpeedClaimedEvent = parseAbiItem(
+  "event Claimed(uint256 indexed marketId, address indexed user, uint256 amount)"
+);
+
+export async function fetchAllSpeedTrades(): Promise<SpeedTradeEvent[]> {
+  try {
+    const fromBlock = await getSafeFromBlock();
+    const [buyLogs, sellLogs] = await Promise.all([
+      publicClient.getLogs({
+        address: SPEED_MARKET_ADDRESS,
+        event: SpeedBuyEvent,
+        fromBlock,
+        toBlock: "latest",
+      }),
+      publicClient.getLogs({
+        address: SPEED_MARKET_ADDRESS,
+        event: SpeedSellEvent,
+        fromBlock,
+        toBlock: "latest",
+      }),
+    ]);
+
+    return [
+      ...buyLogs.map((log) => ({
+        marketId: log.args.marketId!,
+        user: log.args.user!,
+        isUp: log.args.isUp!,
+        collateralAmount: log.args.collateralIn!,
+        tokenAmount: log.args.tokensOut!,
+        type: "buy" as const,
+        blockNumber: log.blockNumber,
+        txHash: log.transactionHash!,
+        logIndex: log.logIndex,
+        timestamp: 0,
+      })),
+      ...sellLogs.map((log) => ({
+        marketId: log.args.marketId!,
+        user: log.args.user!,
+        isUp: log.args.isUp!,
+        collateralAmount: log.args.collateralOut!,
+        tokenAmount: log.args.tokensIn!,
+        type: "sell" as const,
+        blockNumber: log.blockNumber,
+        txHash: log.transactionHash!,
+        logIndex: log.logIndex,
+        timestamp: 0,
+      })),
+    ];
+  } catch (err) {
+    console.error("fetchAllSpeedTrades failed:", err);
+    return [];
+  }
+}
+
+export interface SpeedClaimEvent {
+  marketId: bigint;
+  user: `0x${string}`;
+  amount: bigint;
+}
+
+export async function fetchAllSpeedClaims(): Promise<SpeedClaimEvent[]> {
+  try {
+    const fromBlock = await getSafeFromBlock();
+    const logs = await publicClient.getLogs({
+      address: SPEED_MARKET_ADDRESS,
+      event: SpeedClaimedEvent,
+      fromBlock,
+      toBlock: "latest",
+    });
+
+    return logs.map((log) => ({
+      marketId: log.args.marketId!,
+      user: log.args.user!,
+      amount: log.args.amount!,
+    }));
+  } catch (err) {
+    console.error("fetchAllSpeedClaims failed:", err);
+    return [];
+  }
+}
+
 export { enrichWithTimestamps };

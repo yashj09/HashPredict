@@ -7,6 +7,10 @@ import {
   fetchMarketTradeEvents,
   fetchMarketClaimEvents,
 } from "@/lib/events";
+import {
+  fetchAllSpeedTrades,
+  fetchAllSpeedClaims,
+} from "@/lib/speedEvents";
 
 export interface LeaderboardEntry {
   address: `0x${string}`;
@@ -16,6 +20,9 @@ export interface LeaderboardEntry {
   totalClaimProceeds: bigint;
   realizedPnL: bigint;
   tradeCount: number;
+  // Breakdown
+  regularTrades: number;
+  speedTrades: number;
 }
 
 export function useLeaderboard() {
@@ -29,12 +36,11 @@ export function useLeaderboard() {
 
   return useQuery<LeaderboardEntry[]>({
     queryKey: ["leaderboard", addresses?.length],
-    enabled: !!addresses && addresses.length > 0,
-    staleTime: 60_000,
+    enabled: !!addresses,
+    staleTime: 30_000,
+    refetchInterval: 30_000,
     retry: 1,
     queryFn: async () => {
-      if (!addresses) return [];
-
       const userMap = new Map<
         string,
         {
@@ -43,29 +49,41 @@ export function useLeaderboard() {
           totalSellProceeds: bigint;
           totalClaimProceeds: bigint;
           tradeCount: number;
+          regularTrades: number;
+          speedTrades: number;
         }
       >();
 
       const getOrCreate = (addr: string) => {
-        if (!userMap.has(addr)) {
-          userMap.set(addr, {
+        const lower = addr.toLowerCase();
+        if (!userMap.has(lower)) {
+          userMap.set(lower, {
             totalVolume: 0n,
             totalBuyCost: 0n,
             totalSellProceeds: 0n,
             totalClaimProceeds: 0n,
             tradeCount: 0,
+            regularTrades: 0,
+            speedTrades: 0,
           });
         }
-        return userMap.get(addr)!;
+        return userMap.get(lower)!;
       };
 
-      // Fetch events from all markets in parallel
-      const [allTrades, allClaims] = await Promise.all([
-        Promise.all(addresses.map((addr) => fetchMarketTradeEvents(addr))),
-        Promise.all(addresses.map((addr) => fetchMarketClaimEvents(addr))),
+      // Fetch regular market events + speed market events in parallel
+      const [regularTrades, regularClaims, speedTrades, speedClaims] = await Promise.all([
+        addresses && addresses.length > 0
+          ? Promise.all(addresses.map((addr) => fetchMarketTradeEvents(addr)))
+          : Promise.resolve([]),
+        addresses && addresses.length > 0
+          ? Promise.all(addresses.map((addr) => fetchMarketClaimEvents(addr)))
+          : Promise.resolve([]),
+        fetchAllSpeedTrades(),
+        fetchAllSpeedClaims(),
       ]);
 
-      for (const trades of allTrades) {
+      // Process regular market trades
+      for (const trades of regularTrades) {
         for (const trade of trades) {
           const entry = getOrCreate(trade.user);
           if (trade.type === "buy") {
@@ -76,14 +94,36 @@ export function useLeaderboard() {
             entry.totalVolume += trade.collateralAmount;
           }
           entry.tradeCount++;
+          entry.regularTrades++;
         }
       }
 
-      for (const claims of allClaims) {
+      // Process regular market claims
+      for (const claims of regularClaims) {
         for (const claim of claims) {
           const entry = getOrCreate(claim.user);
           entry.totalClaimProceeds += claim.amount;
         }
+      }
+
+      // Process speed market trades
+      for (const trade of speedTrades) {
+        const entry = getOrCreate(trade.user);
+        if (trade.type === "buy") {
+          entry.totalBuyCost += trade.collateralAmount;
+          entry.totalVolume += trade.collateralAmount;
+        } else {
+          entry.totalSellProceeds += trade.collateralAmount;
+          entry.totalVolume += trade.collateralAmount;
+        }
+        entry.tradeCount++;
+        entry.speedTrades++;
+      }
+
+      // Process speed market claims
+      for (const claim of speedClaims) {
+        const entry = getOrCreate(claim.user);
+        entry.totalClaimProceeds += claim.amount;
       }
 
       const entries: LeaderboardEntry[] = [];
